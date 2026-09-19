@@ -3,19 +3,75 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meu Projeto Javascript</title>
+    <title>Disk Gás & Água - Pedido Rapido</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="card">
-        <h1>Olã!, JavaScript! Voá</h1>
-        <p>Clique no botão abaixo para testar a intregração.</p>
-        <button id="btnClick">Clique Aqui</button>
-        <p id="mensagem"></p>
-    </div>
+    <div class="container">
+        <p>Faça seu pedido online sem complicação!</p>
+    </header>
+
+    <main>
+        <!-- Produtos -->
+         <section class="produtos">
+            <div class="card-produto">
+                <h2> Botijão de Gás (13kg)</h2>
+                <p class="preco">R$ <span id="precoGas">135.00</span></p>
+                <div class="quantidade">
+                    <button onclick="alterarQtd('gas', -1)">-</button>
+                    <span id="qtdGas">0</span>
+                    <button onclick="alterarQtd('gas', 1)">+</button>
+            </div>
+        </div>
+
+        <div class="card-produto">
+            <h2> Galão de Água (20L)</h2>
+            <p class="preco">R$ <span id="precoAgua">20.00</span></p>
+            <div class="quantidade">
+                <button onclick="alterarQtd('agua', -1)">-</button>
+                <span id="qtdAgua">0</span>
+                <button onclick="alterarQtd('agua', 1)">+</button>
+            </div>
+        </div>
+    </section>
 
 
-    <script src="app.js"></script>
+    <!-- Formulário de Entrega -->
+    <section class="form-entrega">
+        <h2>Dados para Entrega</h2>
+
+        <label for="nome">Seu Nome:</label>
+        <input type="text" id="nome" placeholder="Ex: João Silva" required>
+
+        <label for="endereco">Endereço completo e Nº:</label>
+        <input type="text" id="endereco" placeholder="Ex: Rua das Flores, 123 - Bairro Centro" required>
+
+        <label for="pagamento">Forma de Pagamento:</label>
+        <select id="pagamento">
+            <option value="Pix">Pix</option>
+            <option value="Cartao de Débito">Cartão de Débito</option>
+            <option value="Cartão de Crédito">Cartão de Crédito</option>
+            <option value="Dinheiro">Dinheiro</option>
+        </select>
+
+        <label for="observacao">Observações (ex: Troco para R$ 100):</label>
+        <input type="text" id="observacao" placeholder="Opcional">
+    </section>
+
+    <!-- Resumo do Pedido -->
+     <footer class="resumo">
+        <div class="total-box">
+            <span>Total:</span>
+            <strong>R$ <span id="totalPedido">0.00</span></strong>
+        </div>
+        <button id="btnEnviar" onclick="enviarPedido()"> Confirmar e Enviar no WhatsApp</button>
+    </footer>
+</main>
+</div>
+
+
+
+<script src="app.js"></script>
 </body>
 </html>
