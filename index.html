@@ -1,4 +1,4 @@
-<!DOCTYPE hmtl>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -22,7 +22,7 @@
                 <div class="quantidade">
                     <button type="button" class="btn-qtd" onclick="alterarQtd('gas', -1)" aria-label="Diminuir quantidade">-</button>
                     <!-- Adicionamos inputmode e pattern para forçar teclado numerico -->
-                    <span id="qtdGas" class="qtd-display" inputmode="numeric" pattern="[0-9]*"></span>
+                    <span id="qtdGas" class="qtd-display" inputmode="numeric" pattern="[0-9]*">0</span>
                     <button type="button" class="btn-qtd" onclick="alterarQtd('gas', 1)" aria-label="Aumentar quantidade">+</button>
             </div>
         </div>
@@ -31,9 +31,9 @@
             <h2> Galão de Água (20L)</h2>
             <p class="preco">R$ <span id="precoAgua">20.00</span></p>
             <div class="quantidade">
-                <button type="button" claass="btn-qtd" onclick="alterarQtd('agua', -1)" aria-label="Diminuir quantidade">-</button>
+                <button type="button" class="btn-qtd" onclick="alterarQtd('agua', -1)" aria-label="Diminuir quantidade">-</button>
                 <!-- Adicionamos inputmode pra forçar teclado numerico -->
-                <span id="qtdAgua" class="qtd-display" inputmode="numeric" pattern="[0-9]*"></span>
+                <span id="qtdAgua" class="qtd-display" inputmode="numeric" pattern="[0-9]*">0</span>
                 <button type="button" class="btn-qtd" onclick="alterarQtd('agua', 1)" aria-label="Aumentar quantidade">+</button>
             </div>
         </div>

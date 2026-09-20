@@ -60,7 +60,7 @@ function atualizarTotal() {
 function enviarPedido() {
     const nomeInput = document.getElementById('nome');
     const enderecoInput = document.getElementById('endereco');
-    const pagamentoInput = document.getElementById('pagamento')
+    const pagamentoInput = document.getElementById('pagamento');
     const observacaoInput = document.getElementById('observacao');
 
     const nome = nomeInput.value.trim();
@@ -71,7 +71,7 @@ function enviarPedido() {
     // Reseta estilos de erro anteriores
     nomeInput.classList.remove('campo-erro');
     enderecoInput.classList.remove('campo-erro');
-    pagamentoInput.classList.remove('Campo-erro');
+    pagamentoInput.classList.remove('campo-erro');
 
     let temErro = false;
 
