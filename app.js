@@ -82,12 +82,16 @@ function enviarPedido() {
 
     if (!nome) {
         nomeInput.classList.add('campo-erro');
-        temErro = true;
+        alert("Por favor, preencha o seu nome.");
+        nomeInput.focus()
+        return;
     }
 
     if (!endereco) {
         enderecoInput.classList.add('campo-erro');
-        temErro = true;
+        alert("Por favor, preencha o seu endereço de entrega.");
+        enderecoInput.focus();
+        return; 
     }
 
     if (!pagamento) {
