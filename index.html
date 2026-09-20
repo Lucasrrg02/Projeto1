@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="toast-notification" class="toast hidden">Produto adicionado! </div>
 
     <div class="container">
         <p>Faça seu pedido online sem complicação!</p>
@@ -19,9 +20,10 @@
                 <h2> Botijão de Gás (13kg)</h2>
                 <p class="preco">R$ <span id="precoGas">135.00</span></p>
                 <div class="quantidade">
-                    <button onclick="alterarQtd('gas', -1)">-</button>
-                    <span id="qtdGas">0</span>
-                    <button onclick="alterarQtd('gas', 1)">+</button>
+                    <button type="button" class="btn-qtd" onclick="alterarQtd('gas', -1)" aria-label="Diminuir quantidade">-</button>
+                    <!-- Adicionamos inputmode e pattern para forçar teclado numerico -->
+                    <span id="qtdGas" class="qtd-display" inputmode="numeric" pattern="[0-9]*"></span>
+                    <button type="button" class="btn-qtd" onclick="alterarQtd('gas', 1)" aria-label="Aumentar quantidade">+</button>
             </div>
         </div>
 
@@ -29,9 +31,10 @@
             <h2> Galão de Água (20L)</h2>
             <p class="preco">R$ <span id="precoAgua">20.00</span></p>
             <div class="quantidade">
-                <button onclick="alterarQtd('agua', -1)">-</button>
-                <span id="qtdAgua">0</span>
-                <button onclick="alterarQtd('agua', 1)">+</button>
+                <button type="button" claass="btn-qtd" onclick="alterarQtd('agua', -1)" aria-label="Diminuir quantidade">-</button>
+                <!-- Adicionamos inputmode pra forçar teclado numerico -->
+                <span id="qtdAgua" class="qtd-display" inputmode="numeric" pattern="[0-9]*"></span>
+                <button type="button" class="btn-qtd" onclick="alterarQtd('agua', 1)" aria-label="Aumentar quantidade">+</button>
             </div>
         </div>
     </section>

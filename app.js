@@ -9,15 +9,44 @@ let qtdAgua = 0;
 
 // Funçao para aumentar/diminuir quantidades
 function alterarQtd(produto, valor) {
+    let produtoNome = "";
     if (produto === 'gas') {
         qtdGas = Math.max(0, qtdGas + valor);
         document.getElementById('qtdGas').textContent = qtdGas;
+        produtoNome = "Botijão de Gás";
     } else if (produto === 'agua') {
         qtdAgua = Math.max(0, qtdAgua + valor);
         document.getElementById('qtdAgua').textcontent = qtdAgua;
+        produtoNome = "Galão de Água";
+    }
+
+    // Só mostra a notificação se estiver adicionando (valor > 0)
+    if (valor > 0) {
+        mostrarToast(`${produtoNome} adicionado!`);
     }
 
     atualizarTotal();
+}
+
+// Nova função para controlar o toast
+function mostrarToast(mensagem) {
+    const toast = document.getElementById('toast-notification');
+    toast.textContent = mensagem;
+    toast.classList.remove('hidden');
+
+    // Pequeno delay para a animação de entrada funcionar
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 10);
+
+    // Remove a notificação após 3 segundos
+    setTimeout (() => {
+        toast.classList.remove('show');
+        // Espera a animaçao de saída terminar para esconder o elemento
+        setTimeout (() => {
+            toast.classList.add('hidden');
+        }, 300);
+    }, 3000);
 }
 
 // Atualiza a exibição do total calculado
@@ -28,10 +57,17 @@ function atualizarTotal() {
 
 // Funçao para montar o texto do pedido e abrir o WhatsApp
 function enviarPedido() {
-    const nome = document.getElementById('nome').value.trim();
-    const endereco = document.getElementById('nome').value.trim();
+    const nomeInput = document.getElementById('nome');
+    const enderecoInput = document.getElementById('nome');
     const pagamento = document.getElementById('pagamento').value;
     const observacao = document.getElementById('observacao').value.trim();
+
+    const nome = nomeInput.value.trim();
+    const endereco = enderecoInput.value.trim();
+
+    // Reseta estilos de erro anteriores
+    nomeInput.classList.remove('campo-erro');
+    enderecoInput.classList.remove('campo-erro');
 
     //Validações básicas
     if (qtdGas === 0 && qtdAgua === 0) {
@@ -39,8 +75,19 @@ function enviarPedido() {
         return;
     }
 
-    if (!nome || !endereco) {
-        alert("Por favor, informe seu nome e endereço de entrega.");
+    let temErro = false;
+    if (!nome) {
+        nomeInput.classList.add('campo-erro');
+        temErro = true;
+    }
+
+    if (!endereco) {
+        enderecoInput.classList.add('campo-erro');
+        temErro = true;
+    }
+
+    if (temErro) {
+        alert("Por favor, preencha seu nome e endereço de entrega completos.");
         return;
     }
 

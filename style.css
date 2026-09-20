@@ -146,3 +146,57 @@ header p {
 #btnEnviar:hover {
     background-color: #1ebd56;
 }
+
+/* Estilos para a notificação toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #2e7d32; /* Verde sucesso */
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000; /* Garante que fique por cima de tudo */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    transform: translateY(-20px);
+    opacity: 0;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.toast.hidden {
+    display: none;
+}
+
+/* Estilo para campos obrigatórios não preenchidos */
+.campo-erro {
+    border: 2px solid #d32f2f !important; /* Vermelho erro */
+    background-color: #ffebee;
+}
+
+/* Melhorias pro mobiel e acessibilidade */
+.quantidade {
+    gap: 10px; /* reduz espaço entre botões no mobile */
+}
+
+.btn-qtd {
+    width: 45px; /* Botões maiores pra toque */
+    height: 45px;
+    font-size: 1.5rem; /* Fonte maior dentro do botão */
+}
+
+.qtd-display {
+    font-size: 1.4rem;
+    min-width: 30px; /* Garante espaço para 2 digitos sem mover os botões */
+}
+
+/* Garante que o botão de envio seja grande e facil de clicar em qualquer tela */
+
+#btnEnviar {
+    padding: 18px;
+    font-size: 1.1rem;
+}
