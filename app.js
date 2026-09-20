@@ -59,15 +59,20 @@ function atualizarTotal() {
 function enviarPedido() {
     const nomeInput = document.getElementById('nome');
     const enderecoInput = document.getElementById('nome');
-    const pagamento = document.getElementById('pagamento').value;
-    const observacao = document.getElementById('observacao').value.trim();
+    const pagamentoInput = document.getElementById('pagamento').value;
+    const observacaoInput = document.getElementById('observacao').value.trim();
 
     const nome = nomeInput.value.trim();
     const endereco = enderecoInput.value.trim();
+    const pagamento = pagamentoInput.value;
+    const observacao = observacaoInput.value.trim();
 
     // Reseta estilos de erro anteriores
     nomeInput.classList.remove('campo-erro');
     enderecoInput.classList.remove('campo-erro');
+    pagamentoInput.classList.remove('Campo-erro');
+
+    let temErro = false;
 
     //Validações básicas
     if (qtdGas === 0 && qtdAgua === 0) {
@@ -75,7 +80,6 @@ function enviarPedido() {
         return;
     }
 
-    let temErro = false;
     if (!nome) {
         nomeInput.classList.add('campo-erro');
         temErro = true;
@@ -86,8 +90,13 @@ function enviarPedido() {
         temErro = true;
     }
 
+    if (!pagamento) {
+        pagamentoInput.classList.add('campo-erro');
+        temErro= true;
+    }
+
     if (temErro) {
-        alert("Por favor, preencha seu nome e endereço de entrega completos.");
+        alert("Por favor, preencha todos os campos obrigatórios (Nome, Endereço).");
         return;
     }
 
@@ -96,7 +105,7 @@ function enviarPedido() {
     // Montagem da mensagem formatada para o WhatsApp
     let mensagem = `*- NOVO PEDIDO DE GÁS & ÁGUA -*\n\n`;
     mensagem += `*Cliente:* ${nome}\n`;
-    mensagem += `*Endereço:* ${endereco}`;
+    mensagem += `*Endereço:* ${endereco}\n\n`;
     mensagem += `*Itens do Pedido:*\n`;
 
     if (qtdGas > 0) {
@@ -106,10 +115,12 @@ function enviarPedido() {
         mensagem += `• ${qtdAgua}x Galão de Água 20L (R$ ${(qtdAgua * PRECO_AGUA).toFixed(2)})\n`;
     }
 
-    mensagem += `\n *Pagamento:* ${pagamento}\n`;
     if (observacao) {
         mensagem += `*Obs:* ${observacao}\n`;
     }
+
+    mensagem += `\n *Pagamento:* ${pagamento}\n`;
+    
     mensagem += `\n *Total:* R$ ${total.toFixed(2)}`;
 
     //Codifica o texto para url e redireciona
