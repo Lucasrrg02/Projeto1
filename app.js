@@ -58,7 +58,7 @@ function atualizarTotal() {
 // Funçao para montar o texto do pedido e abrir o WhatsApp
 function enviarPedido() {
     const nomeInput = document.getElementById('nome');
-    const enderecoInput = document.getElementById('nome');
+    const enderecoInput = document.getElementById('endereco');
     const pagamentoInput = document.getElementById('pagamento').value;
     const observacaoInput = document.getElementById('observacao').value.trim();
 
