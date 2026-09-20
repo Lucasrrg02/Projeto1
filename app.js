@@ -16,7 +16,7 @@ function alterarQtd(produto, valor) {
         produtoNome = "Botijão de Gás";
     } else if (produto === 'agua') {
         qtdAgua = Math.max(0, qtdAgua + valor);
-        document.getElementById('qtdAgua').textcontent = qtdAgua;
+        document.getElementById('qtdAgua').textContent = qtdAgua;
         produtoNome = "Galão de Água";
     }
 
@@ -31,6 +31,7 @@ function alterarQtd(produto, valor) {
 // Nova função para controlar o toast
 function mostrarToast(mensagem) {
     const toast = document.getElementById('toast-notification');
+    if (!toast) return; // Proteção caso a div do toast não exista no HTML ainda
     toast.textContent = mensagem;
     toast.classList.remove('hidden');
 
@@ -59,8 +60,8 @@ function atualizarTotal() {
 function enviarPedido() {
     const nomeInput = document.getElementById('nome');
     const enderecoInput = document.getElementById('endereco');
-    const pagamentoInput = document.getElementById('pagamento').value;
-    const observacaoInput = document.getElementById('observacao').value.trim();
+    const pagamentoInput = document.getElementById('pagamento')
+    const observacaoInput = document.getElementById('observacao');
 
     const nome = nomeInput.value.trim();
     const endereco = enderecoInput.value.trim();
