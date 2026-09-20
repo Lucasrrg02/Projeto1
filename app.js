@@ -68,6 +68,9 @@ function enviarPedido() {
     const pagamento = pagamentoInput.value;
     const observacao = observacaoInput.value.trim();
 
+    localStorage.setItem('cliente_nome', nome);
+    localStorage.setItem('cliente_endereco', endereco);
+
     // Reseta estilos de erro anteriores
     nomeInput.classList.remove('campo-erro');
     enderecoInput.classList.remove('campo-erro');
@@ -132,3 +135,12 @@ function enviarPedido() {
     const url = `https://wa.me/${NUMERO_WHATSAPP}?text=${encodeURIComponent(mensagem)}`;
     window.open(url, '_blank');
 }
+
+// Salva Endereço e nome
+window.addEventListener('DOMContentLoaded', () => {
+    const nomeSalvo = localStorage.getItem('cliente_nome');
+    const enderecoSalvo = localStorage.getItem('cliente_endereco');
+
+    if (nomeSalvo) document.getElementById('nome').value = nomeSalvo;
+    if (enderecoSalvo) document.getElementById('endereco').value = enderecoSalvo;
+});
