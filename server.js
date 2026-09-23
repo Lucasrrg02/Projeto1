@@ -77,3 +77,26 @@ app.post('/api/precos', async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+// Rota para atualizar preços com autenticaçao por senha
+app.post('/api/admin/precos', async (req, res) => {
+    const { senha, gas, agua } = req.body;
+
+    // Define a senha do Admin (pode definir no env como ADMIN_PASSWORD)
+    const SENHA_ADMIN = process.env.ADMIN_PASSWORD;
+
+    if (senha !== SENHA_ADMIN) {
+        return res.status(401).json({ error: "Senha incorreta" });
+    }
+
+    try {
+         await pool.query(
+            "INSERT INTO configuracoes (chave, valor) VALUES ('preco_gas', $1), ('preco_agua', $2) ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor",
+            [gas, agua]
+    );
+    res.json({ message: "Preços atualizados com sucesso!" });
+} catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Erro ao atualizar preços." });
+    }
+});
