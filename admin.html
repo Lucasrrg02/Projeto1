@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Admin - Cadastrar Distribuidora</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background-color: #f4f6f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 480px;
+        }
+        h2 {
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+        .help-text {
+            font-size: 12px;
+            color: #777;
+            margin-top: 3px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #mensagem {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+        .sucesso {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .erro {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        </style>
+    </head>
+    <body>
+
+    <div class="container">
+        <h2>Cadastrar Distribuidora</h2>
+        <form id="formCadastro">
+            <div class="form-group">
+                <label for="slug">Identificador da Loja (Slug)</label>
+                <input type="text" id="slug" placeholder="ex: gas-ourinhos" required>
+                <p class="help-text">Será usado na URL: ?loja=gas-ourinhos (Sem espaços ou acentos)</p>
+            </div>
+
+            <div class="form-group">
+                <label for="nome">Nome da Distribuidora</label>
+                <input type="text" id="nome" placeholder="ex: Disk Gás Ourinhos" required>
+            </div>
+
+            <div class="form-group">
+                <label for="whatsapp">WhatsApp (Com DDD)</label>
+                <input type="text" id="whatsapp" placeholder="ex: 5514999999999" required>
+                <p class="help-text">Insira com o codigo do país (55) e DDD, apenas números.</p>
+            </div>
+
+            <div class="form-group">
+                <label for="senhaAdmin">Senha Administrativa da Loja</label>
+                <input type="password" id="senhaAdmin" placeholder="Digite uma senha" required>
+            </div>
+
+            <div class="form-group">
+                <label for="precoGas">Preço do Gás (R$)</label>
+                <input type="number" step="0.01" id="precoGas" value="135.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="precoAgua">Preço da Água (R$)</label>
+                <input type="number" step="0.01" id="precoAgua" value="20.00" required>
+            </div>
+
+            <button type="submit">Cadastrar Loja</button>
+        </form>
+
+        <div id="mensagem"></div>
+    </div>
+
+    <script>
+        const API_URL = "https://disk-gas-api.onrender.com";
+
+        document.getElementById('formCadastro').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const slug = document.getElementById('slug').value.trim();
+            const nome = document.getElementById('nome').value.trim();
+            const whatsapp = document.getElementById('whatsapp').value.trim();
+            const senha_admin = document.getElementById('senhaAdmin').value;
+            const preco_gas = parseFloat(document.getElementById('precoGas').value);
+            const preco_agua = parseFloat(document.getElementById('precoAgua').value);
+
+            const msgDiv = document.getElementById('mensagem');
+            msgDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/api/admin/distribuidoras`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        slug,
+                        nome,
+                        whatsapp,
+                        senha_admin,
+                        preco_gas,
+                        preco_agua
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msgDiv.className = 'sucesso';
+                    msgDiv.innerHTML = `${data.message}<br><br><a href="index.html?loja=${slug}" target="_blank">Acessar Loja Cadastrada</a>`;
+                    msgDiv.style.display = 'block';
+                    document.getElementById('formCadastro').reset();
+                } else {
+                    msgDiv.className = 'erro';
+                    msgDiv.textContent = data.error || "Erro ao cadastrar distribuidora.";
+                    msgDiv.style.display = 'block';
+                }
+            } catch (err) {
+                msgDiv.className = 'erro';
+                msgDiv.textContent = 'Erro de conexão com o servidor.';
+                msgDiv.style.display = 'block';
+            }
+        });
+</script>
+
+</body>
+</html>
