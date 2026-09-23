@@ -12,103 +12,116 @@ const pool = new Pool({
     ssl: { rejectUnauthorized: false }
 });
 
-// Rota de teste
-app.get('/', (req, res) => {
-    res.send('API Disk Gás e Água rodando!');
-});
-
-// Buscar preços
-app.get('/api/precos', async (req, res) => {
+// Inicializador de Tabelas no Banco de Dados
+async function inicializarBanco() {
     try {
+        // Tabela de Distribuidoras (Multi-tenant)
         await pool.query(`
-            CREATE TABLE IF NOT EXISTS configuracoes (
-                chave VARCHAR(50) PRIMARY KEY,
-                valor VARCHAR(50) NOT NULL
-        );
-        `);
-
-        const result = await pool.query('SELECT chave, valor FROM configuracoes');
-        const precos = {};
-        result.rows.forEach(row => {
-            precos[row.chave] = parseFloat(row.valor);
-        });
-        res.json({
-            preco_gas: precos.preco_gas || 135.00,
-            preco_agua: precos.preco_agua || 20.00
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 2. Buscar cliente por telefone
-app.get('/api/clientes/:telefone', async (req, res) => {
-    const { telefone } = req.params;
-    try {
-        const result = await pool.query('SELECT * FROM clientes WHERE telefone = $1', [telefone]);
-        if (result.rows.length > 0) {
-            res.json(result.rows[0]);
-        } else {
-            res.status(404).json({ message: 'Cliente não encontrado' });
-        }
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 3. Salvar/Atualizar cliente
-app.post('/api/clientes', async (req, res) => {
-    const { telefone, nome, endereco } = req.body;
-    try {
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS clientes (
-            telefone VARCHAR(20) PRIMARY KEY,
-            nome VARCHAR(100) NOT NULL,
-            endereco TEXT NOT NULL
+            CREATE TABLE IF NOT EXISTS distribuidoras (
+                slug VARCHAR(50) PRIMARY KEY,
+                nome VARCHAR(100) NOT NULL,
+                whatsapp VARCHAR(20) NOT NULL,
+                senha_admin VARCHAR(100) NOT NULL,
+                preco_gas DECIMAL(10,2) NOT NULL DEFAULT 135.00,
+                preco_agua DECIMAL(10,2) NOT NULL DEFAULT 20.00
             );
         `);
-        const query = `
-            INSERT INTO clientes (telefone, nome, endereco)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (telefone)
-            DO UPDATE SET nome = EXCLUDED.nome, endereco = EXCLUDED.endereco;
-            `;
-    await pool.query(query, [telefone, nome, endereco]);
-    res.json({ message: 'Cliente salvo com sucesso!' });
+
+        // Insere a distribuidora padrão caso o banco esteja limpo
+        await pool.query(`
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
+            VALUES ('padrao', 'Disk Gás & Água Principal', '5514996905008', '123456', 135.00, 20.00)
+            ON CONFLICT (slug) DO NOTHING;
+        `);
     } catch (err) {
-    res.status(500).json({ error: err.message });
+        console.error("Erro ao inicializar tabelas do banco:", err);
     }
+}
+inicializarBanco();
+
+// Rota de teste
+app.get('/', (req, res) => {
+    res.send('API Disk Gás e Água Multi-tenant rodando!');
 });
 
-// 4. Atualizar preços com autenticação por senha (Admin)
-app.post('/api/admin/precos', async (req, res) => {
-    const { senha, gas, agua } = req.body;
-    const SENHA_ADMIN = process.env.ADMIN_PASSWORD;
+// 1. Cadastrar/Criar Nova Distribuidora
+app.post('/api/admin/distribuidoras', async (req, res) => {
+    const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua } = req.body;
 
-    if (!SENHA_ADMIN) {
-        return res.status(500).json({ error: "Senha de admin não configurada no servidor." });
-    }
-
-    if (senha !== SENHA_ADMIN) {
-        return res.status(401).json({ error: "Senha incorreta!" });
+    if (!slug || !nome || !whatsapp || !senha_admin) {
+        return res.status(400).json({ error: "Preencha todos os campos obrigatórios (slug, nome, whatsapp, senha_admin)." });
     }
 
     try {
         await pool.query(`
-            CREATE TABLE IF NOT EXISTS configuracoes (
-                chave VARCHAR(50) PRIMARY KEY,
-                valor VARCHAR(50) NOT NULL
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (slug) DO UPDATE
+            SET nome = EXCLUDED.nome, whatsapp = EXCLUDED.whatsapp, senha_admin = EXCLUDED.senha_admin;
+        `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00]);
+
+        res.json({ message: `Distribuidora '${slug}' cadastrada/atualizada com sucesso!` });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 2. Buscar dados e preços de uma distribuidora específica
+app.get('/api/:slug/precos', async (req, res) => {
+    const { slug } = req.params;
+    try {
+        const result = await pool.query(
+            'SELECT nome, whatsapp, preco_gas, preco_agua FROM distribuidoras WHERE slug = $1',
+            [slug.toLowerCase()]     
         );
-        `);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Distribuidora não encontrada." });
+        }
+
+        const row = result.rows[0];
+        res.json({
+            nome: row.nome,
+            whatsapp: row.whatsapp,
+            preco_gas: parseFloat(row.preco_gas),
+            preco_agua: parseFloat(row.preco_agua)
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Atualizar preços da distribuidora com autenticação por senha individual (Admin)
+app.post('/api/:slug/admin/precos', async (req, res) => {
+    const { slug } = req.params;
+    const { senha, gas, agua } = req.body;
+
+    try {
+        const check = await pool.query('SELECT senha_admin FROM distribuidoras WHERE slug = $1', [slug.toLowerCase()]);
+
+        if (check.rows.length === 0) {
+            return res.status(404).json({ error: "Distribuidora não encontrada." });
+        }
+
+        if (senha !== check.rows[0].senha_admin) {
+            return res.status(401).json({ error: "Senha incorreta para esta Distribuidora!" });
+        }
+
+        const precoGas = parseFloat(gas);
+        const precoAgua = parseFloat(agua);
+
+        if (isNaN(precoGas) || isNaN(precoAgua)) {
+            return res.status(400).json({ error: "Forneça valores válidos para os preços de gás e água." });
+        }
 
         await pool.query(
-            "INSERT INTO configuracoes (chave, valor) VALUES ('preco_gas', $1), ('preco_agua', $2) ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor",
-            [gas.toString(), agua.toString()]
+            'UPDATE distribuidoras SET preco_gas = $1, preco_agua = $2 WHERE slug = $3',
+            [precoGas, precoAgua, slug.toLowerCase()]
         );
-        res.json({ message: "Preços atualizados com sucesso!" });
+
+        res.json({ message: "Preços da distribuidora atualizados com sucesso!" });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: "Erro ao atualizar preços." });
+        res.status(500).json({ error: err.message });
     }
 });
 
