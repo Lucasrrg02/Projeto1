@@ -1,3 +1,7 @@
+// URL da API hospedada no Render
+const API_URL = "https://disk-gas-api.onrender.com";
+
+
 // Preços dos produtos
 const PRECO_GAS = 135.00;
 const PRECO_AGUA = 20.00;
