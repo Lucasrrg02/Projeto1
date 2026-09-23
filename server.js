@@ -20,12 +20,22 @@ app.get('/', (req, res) => {
 // Buscar preços
 app.get('/api/precos', async (req, res) => {
     try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS configuracoes (
+                chave VARCHAR(50) PRIMARY KEY,
+                valor VARCHAR(50) NOT NULL
+        );
+        `);
+
         const result = await pool.query('SELECT chave, valor FROM configuracoes');
         const precos = {};
         result.rows.forEach(row => {
             precos[row.chave] = parseFloat(row.valor);
         });
-        res.json(precos);
+        res.json({
+            preco_gas: precos.preco_gas || 135.00,
+            preco_agua: precos.preco_agua || 20.00
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -50,6 +60,13 @@ app.get('/api/clientes/:telefone', async (req, res) => {
 app.post('/api/clientes', async (req, res) => {
     const { telefone, nome, endereco } = req.body;
     try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS clientes (
+            telefone VARCHAR(20) PRIMARY KEY,
+            nome VARCHAR(100) NOT NULL,
+            endereco TEXT NOT NULL
+            );
+        `);
         const query = `
             INSERT INTO clientes (telefone, nome, endereco)
             VALUES ($1, $2, $3)
@@ -77,9 +94,16 @@ app.post('/api/admin/precos', async (req, res) => {
     }
 
     try {
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS configuracoes (
+                chave VARCHAR(50) PRIMARY KEY,
+                valor VARCHAR(50) NOT NULL
+        );
+        `);
+
         await pool.query(
             "INSERT INTO configuracoes (chave, valor) VALUES ('preco_gas', $1), ('preco_agua', $2) ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor",
-            [gas, agua]
+            [gas.toString(), agua.toString()]
         );
         res.json({ message: "Preços atualizados com sucesso!" });
     } catch (err) {
