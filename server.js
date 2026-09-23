@@ -76,7 +76,6 @@ app.post('/api/precos', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 
 // Rota para atualizar preços com autenticaçao por senha
 app.post('/api/admin/precos', async (req, res) => {
@@ -100,3 +99,5 @@ app.post('/api/admin/precos', async (req, res) => {
     res.status(500).json({ error: "Erro ao atualizar preços." });
     }
 });
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
