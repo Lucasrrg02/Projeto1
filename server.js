@@ -69,14 +69,15 @@ app.post('/api/admin/precos', async (req, res) => {
     const SENHA_ADMIN = process.env.ADMIN_PASSWORD;
 
     if (!SENHA_ADMIN) {
-        return res.status(500).json({ error: "Senha de admin não configurada no servidor" });
+        return res.status(500).json({ error: "Senha de admin não configurada no servidor." });
     }
 
     if (senha !== SENHA_ADMIN) {
         return res.status(401).json({ error: "Senha incorreta!" });
     }
 
-    try { await pool.query(
+    try {
+        await pool.query(
             "INSERT INTO configuracoes (chave, valor) VALUES ('preco_gas', $1), ('preco_agua', $2) ON CONFLICT (chave) DO UPDATE SET valor = EXCLUDED.valor",
             [gas, agua]
         );
@@ -86,3 +87,6 @@ app.post('/api/admin/precos', async (req, res) => {
         res.status(500).json({ error: "Erro ao atualizar preços." });
     }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
