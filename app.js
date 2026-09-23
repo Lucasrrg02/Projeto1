@@ -1,15 +1,85 @@
 // URL da API hospedada no Render
 const API_URL = "https://disk-gas-api.onrender.com";
 
+// 1. Identifica o slug da distribuidora via parâmetro URL (?loja=slug)
+const urlParams = new URLSearchParams(window.location.search);
+const DISTRIBUIDORA_SLUG = urlParams.get('loja') || 'padrao';
+
 
 // Preços dos produtos
 let PRECO_GAS = 135.00;
 let PRECO_AGUA = 20.00;
-
-const NUMERO_WHATSAPP = "5514996905008";
+let NUMERO_WHATSAPP = "5514996905008";
 
 let qtdGas = 0;
 let qtdAgua = 0;
+
+// 2. Carrega preços e dados da distribuidora atual da API
+async function carregarPrecosDoBanco() {
+    try {
+        const response = await fetch(`${API_URL}/api/${DISTRIBUIDORA_SLUG}/precos`);
+
+        if (response.ok) {
+            const data = await response.json();
+
+            PRECO_GAS = parseFloat(data.preco_gas);
+            PRECO_AGUA = parseFloat(data.preco_agua);
+            NUMERO_WHATSAPP = data.whatsapp; // Atualiza o WhatsApp dinamicamente
+
+            // Atualiza os elementos na tela
+            const elGas = document.getElementById('precoGas');
+            const elAgua = document.getElementById('precoAgua');
+            const elNomeLoja = document.getElementById('nomeLoja'); // Opcional: elemento no topo da tela
+
+            if (elGas) elGas.textContent = PRECO_GAS.toFixed(2);
+            if (elAgua) elAgua.textContent = PRECO_AGUA.toFixed(2);
+            if (elNomeLoja && data.nome) elNomeLoja.textContent = data.nome;
+
+            atualizarTotal();
+        } else {
+            console.error("Distribuidora não encontrada na API.");
+        }
+    } catch (error) {
+        console.error("Erro ao conectar à API:", error);
+    }
+}
+
+
+// 3. Atualiza os preços no banco via modal de Admin
+async function salvarNovosPrecos() {
+    const senhaInput = document.getElementById('senhaAdmin');
+    const gasInput = document.getElementById('novoPrecoGas');
+    const aguaInput = document.getElementById('novoPrecoAgua');
+
+    const senha = senhaInput ? senhaInput.value : '';
+    const novoGas = parseFloat(gasInput ? gasInput.value : 0);
+    const novoAgua = parseFloat(aguaInput ? aguaInput.value : 0);
+
+    if (!senha) {
+        alert("Digite a senha de administrador.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/api/${DISTRIBUIDORA_SLUG}/admin/precos`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senha: senha, gas: novoGas, agua: novoAgua })
+        });
+
+        const resultado = await response.json();
+
+        if (response.ok) {
+            alert("Preços atualizados com sucesso!");
+            if (typeof fecharModalAdmin === 'function') fecharModalAdmin();
+            carregarPrecosDoBanco();
+        } else {
+            alert(resultado.error || "Erro ao atualizar preços.");
+        }
+    } catch (error) {
+        alert("Falha de conexão com o servidor.");
+    }
+}
 
 // Funçao para aumentar/diminuir quantidades
 function alterarQtd(produto, valor) {
@@ -104,11 +174,7 @@ function enviarPedido() {
 
     if (!pagamento) {
         pagamentoInput.classList.add('campo-erro');
-        temErro= true;
-    }
-
-    if (temErro) {
-        alert("Por favor, preencha todos os campos obrigatórios (Nome, Endereço).");
+        alert("Por favor, seleciona a forma de pagamento.");
         return;
     }
 
@@ -151,69 +217,20 @@ window.addEventListener('DOMContentLoaded', () => {
     carregarPrecosDoBanco();
 });
 
-    async function carregarPrecosDoBanco() {
-        try {
-            const response = await fetch(`${API_URL}/api/precos`);
-            if (response.ok) {
-                const data = await response.json();
-                if (data.preco_gas) {
-                    PRECO_GAS = data.preco_gas;
-                    document.getElementById('precoGas').textContent = PRECO_GAS.toFixed(2);
-                }
-                if (data.preco_agua) {
-                    PRECO_AGUA = data.preco_agua;
-                    document.getElementById('precoAgua').textContent = PRECO_AGUA.toFixed(2);
-                }
-                atualizarTotal();
-            }
-        } catch (error) {
-            console.error("Erro ao carregar preços do banco de dados:", error);
-        }
+function abrirModalAdmin() {
+    const modal = document.getElementById('modalAdmin');
+    if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('novoPrecoGas').value = PRECO_GAS;
+        document.getElementById('novoPrecoAgua').value = PRECO_AGUA;
     }
+}
 
-    // Funções da Área do Administrador (Modal)
-    function abrirModalAdmin() {
-        const modal = document.getElementById('modalAdmin');
-        if (modal) {
-            modal.style.display = 'flex';
-            document.getElementById('novoPrecoGas').value = PRECO_GAS;
-            document.getElementById('novoPrecoAgua').value = PRECO_AGUA;
-        }
+function fecharModalAdmin() {
+    const modal = document.getElementById('modalAdmin');
+    if (modal) {
+        modal.style.display = 'none';
+        const senhaInput = document.getElementById('senhaAdmin');
+        if (senhaInput) senhaInput.value = '';
     }
-
-    function fecharModalAdmin() {
-        const modal = document.getElementById('modalAdmin');
-        if (modal) {
-            modal.style.display = 'none';
-            document.getElementById('senhaAdmin').value = '';
-        }
-    }
-
-    async function salvarNovosPrecos() {
-        const senha = document.getElementById('senhaAdmin').value;
-        const novoGas = parseFloat(document.getElementById('novoPrecoGas').value);
-        const novoAgua = parseFloat(document.getElementById('novoPrecoAgua').value);
-
-        if (!senha) return alert("Por Favor, digite a senha do administrador!");
-        if (isNaN(novoGas) || isNaN(novoAgua)) return alert("Digite valores de preço válidos.");
-
-        try {
-            const response = await fetch(`${API_URL}/api/admin/precos`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ senha: senha, gas: novoGas, agua: novoAgua })
-            });
-            
-            const resultado = await response.json();
-
-            if (response.ok) {
-                alert("Preços atualizados com sucesso!");
-                fecharModalAdmin();
-                carregarPrecosDoBanco();
-            } else {
-                alert(resultado.error || "Senha incorreta.");
-            }
-        } catch (error) {
-            alert("Falha ao conectar ao servidor.");
-        }
-    }
+}
