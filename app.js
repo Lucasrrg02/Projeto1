@@ -30,10 +30,21 @@ async function carregarPrecosDoBanco() {
             const elGas = document.getElementById('precoGas');
             const elAgua = document.getElementById('precoAgua');
             const elNomeLoja = document.getElementById('nomeLoja'); // Opcional: elemento no topo da tela
+            const elImgLogo = document.getElementById('imgLogo');
 
             if (elGas) elGas.textContent = PRECO_GAS.toFixed(2);
             if (elAgua) elAgua.textContent = PRECO_AGUA.toFixed(2);
             if (elNomeLoja && data.nome) elNomeLoja.textContent = data.nome;
+
+            // Logica para exibir/ocultar a Logo
+            if (elImgLogo) {
+                if (data.logo_url && data.logo_url.trim() !== '') {
+                    elImgLogo.src = data.logo_url;
+                    elImgLogo.style.display = 'block';
+                } else {
+                    elImgLogo.style.display = 'none';
+                }
+            }
 
             atualizarTotal();
         } else {
