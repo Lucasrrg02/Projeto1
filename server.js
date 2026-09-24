@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
 // 1. Cadastrar/Criar Nova Distribuidora (Bloqueia sobrescrita se o slug já existir)
 app.post('/api/admin/distribuidoras', async (req, res) => {
     try {
-        const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
+        const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url, senha_mestre } = req.body;
 
     const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
     
@@ -77,14 +77,15 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
         // 2. Insere a nova loja apenas se não existir conflito
         await pool.query(`
             INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
             ON CONFLICT (slug) DO UPDATE
             SET nome = EXCLUDED.nome,
                 whatsapp = EXCLUDED.whatsapp,
                 senha_admin = EXCLUDED.senha_admin,
                 preco_gas = EXCLUDED.preco_gas,
-                preco_agua = EXCLUDED.preco_agua;
-        `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00]);
+                preco_agua = EXCLUDED.preco_agua,
+                logo_url = EXCLUDED.logo_url;
+        `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00, logo_url || null]);
 
         res.json({ message: `Distribuidora '${slug}' cadastrada/atualizada com sucesso!` });
     } catch (err) {
