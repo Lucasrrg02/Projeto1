@@ -44,16 +44,16 @@ app.get('/', (req, res) => {
     res.send('API Disk Gás e Água Multi-tenant rodando!');
 });
 
-// 1. Cadastrar/Criar Nova Distribuidora
+// 1. Cadastrar/Criar Nova Distribuidora (Bloqueia sobrescrita se o slug já existir)
 app.post('/api/admin/distribuidoras', async (req, res) => {
     try {
         const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
 
-        const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
-
-        if (!senha_mestre || senha_mestre !== SENHA_MESTRE_SISTEMA) {
-            return res.status(401).json({ error: "Acesso negado: Senha Mestre Do Sistema incorreta!" });
-        }
+    const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
+    
+    if (!senha_mestre || senha_mestre !== SENHA_MESTRE_SISTEMA) {
+        return res.status(401).json({ error: "Acesso negado: Senha Mestre Do Sistema incorreta!" });
+    }
 
         if (!slug || !nome || !whatsapp || !senha_admin) {
             return res.status(400).json({ error: "Preencha todos os campos obrigatórios (slug, nome, whatsapp, senha_admin)." });
@@ -63,7 +63,7 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
 
         // 1. Verifica se o slug já existe na base de dados
         const checkExist = await pool.query(
-            'SELECT slug FROM distribuidoras WHERE LOWER(slug) = LOWER($1)',
+            'SELECT slug FROM distribuidoras WHERE slug = $1',
             [slugTratado]
         );
 
@@ -77,24 +77,15 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
         await pool.query(`
             INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
             VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (slug) DO NOTHING;
-        `, [
-            slugTratado,
-            nome,
-            whatsapp,
-            senha_admin,
-            parseFloat(preco_gas) || 135.00,
-            parseFloat(preco_agua) || 20.00
-        ]);
+            ON CONFLICT (slug) DO UPDATE
+            SET nome = EXCLUDED.nome,
+                whatsapp = EXCLUDED.whatsapp,
+                senha_admin = EXCLUDED.senha_admin,
+                preco_gas = EXCLUDED.preco_gas,
+                preco_agua = EXCLUDED.preco_agua;
+        `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00]);
 
-        // se nenhuma linha foi afetada, significa q ja tinha no banco de dados
-        if (insertResult.rowCount === 0) {
-            return res.status(409).json({
-                error: `O identificador '${slugTratado}' já existe na base de dados.`
-            });
-        }
-
-        return res.json({ message: `Distribuidora '${slugTratado}' cadastrada com sucesso!` });
+        res.json({ message: `Distribuidora '${slug}' cadastrada/atualizada com sucesso!` });
     } catch (err) {
         console.error("Erro no cadastro:", err);
         return res.status(500).json({ error: err.message });
