@@ -48,8 +48,8 @@ app.get('/', (req, res) => {
 app.post('/api/admin/distribuidoras', async (req, res) => {
     const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
 
-    const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE || "senha_de_teste_local";
-
+    const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
+    
     if (!senha_mestre || senha_mestre !== SENHA_MESTRE_SISTEMA) {
         return res.status(401).json({ error: "Acesso negado: Senha Mestre Do Sistema incorreta!" });
     }
