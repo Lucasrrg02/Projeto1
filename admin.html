@@ -96,6 +96,12 @@
     <div class="container">
         <h2>Cadastrar Distribuidora</h2>
         <form id="formCadastro">
+            <div class="form-group" style="background-color: #fff3cd; padding: 12px; border-radius: 6px; border: 1px solid #ffeeba;">
+                <label for="senhaMestre" style="color: #856404;"> Senha Mestre do Sistema</label>
+                <input type="password" id="senhaMestre" placeholder="Digite a senha mestre global" required>
+                <p class="help-text">Necessária para autorizar o cadastro de novas lojas.</p>
+            </div>
+
             <div class="form-group">
                 <label for="slug">Identificador da Loja (Slug)</label>
                 <input type="text" id="slug" placeholder="ex: gas-ourinhos" required>
@@ -140,6 +146,7 @@
         document.getElementById('formCadastro').addEventListener('submit', async (e) => {
             e.preventDefault();
 
+            const senha_mestre = document.getElementById('senhaMestre').value;
             const slug = document.getElementById('slug').value.trim();
             const nome = document.getElementById('nome').value.trim();
             const whatsapp = document.getElementById('whatsapp').value.trim();
@@ -155,6 +162,7 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
+                        senha_mestre,
                         slug,
                         nome,
                         whatsapp,
