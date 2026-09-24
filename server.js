@@ -44,7 +44,7 @@ app.get('/', (req, res) => {
     res.send('API Disk Gás e Água Multi-tenant rodando!');
 });
 
-// 1. Cadastrar/Criar Nova Distribuidora (Bloqueia sobrescrita se o slug já existir)
+// 1. Cadastrar/Criar Nova Distribuidora
 app.post('/api/admin/distribuidoras', async (req, res) => {
     try {
         const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
@@ -63,7 +63,7 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
 
         // 1. Verifica se o slug já existe na base de dados
         const checkExist = await pool.query(
-            'SELECT slug FROM distribuidoras WHERE slug = $1',
+            'SELECT slug FROM distribuidoras WHERE LOWER(slug) = LOWER($1)',
             [slugTratado]
         );
 
@@ -76,7 +76,8 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
         // 2. Insere a nova loja apenas se não existir conflito
         await pool.query(`
             INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
-            VALUES ($1, $2, $3, $4, $5, $6);
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT (slug) DO NOTHING;
         `, [
             slugTratado,
             nome,
@@ -85,6 +86,13 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
             parseFloat(preco_gas) || 135.00,
             parseFloat(preco_agua) || 20.00
         ]);
+
+        // se nenhuma linha foi afetada, significa q ja tinha no banco de dados
+        if (insertResult.rowCount === 0) {
+            return res.status(409).json({
+                error: `O identificador '${slugTratado}' já existe na base de dados.`
+            });
+        }
 
         return res.json({ message: `Distribuidora '${slugTratado}' cadastrada com sucesso!` });
     } catch (err) {
