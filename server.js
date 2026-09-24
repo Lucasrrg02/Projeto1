@@ -23,13 +23,14 @@ async function inicializarBanco() {
                 whatsapp VARCHAR(20) NOT NULL,
                 senha_admin VARCHAR(100) NOT NULL,
                 preco_gas DECIMAL(10,2) NOT NULL DEFAULT 135.00,
-                preco_agua DECIMAL(10,2) NOT NULL DEFAULT 20.00
+                preco_agua DECIMAL(10,2) NOT NULL DEFAULT 20.00,
+                logo_url TEXT
             );
         `);
 
         // Insere a distribuidora padrão caso o banco esteja limpo
         await pool.query(`
-            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url)
             VALUES ('padrao', 'Disk Gás & Água Principal', '5514996905008', '123456', 135.00, 20.00)
             ON CONFLICT (slug) DO NOTHING;
         `);
@@ -44,35 +45,51 @@ app.get('/', (req, res) => {
     res.send('API Disk Gás e Água Multi-tenant rodando!');
 });
 
-// 1. Cadastrar/Criar Nova Distribuidora
+// 1. Cadastrar/Criar Nova Distribuidora (Bloqueia sobrescrita se o slug já existir)
 app.post('/api/admin/distribuidoras', async (req, res) => {
-    const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
+    try {
+        const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
 
-    const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE || "senha_de_teste_local";
-
+    const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
+    
     if (!senha_mestre || senha_mestre !== SENHA_MESTRE_SISTEMA) {
         return res.status(401).json({ error: "Acesso negado: Senha Mestre Do Sistema incorreta!" });
     }
 
-    if (!slug || !nome || !whatsapp || !senha_admin) {
-        return res.status(400).json({ error: "Preencha todos os campos obrigatórios (slug, nome, whatsapp, senha_admin)." });
-    }
+        if (!slug || !nome || !whatsapp || !senha_admin) {
+            return res.status(400).json({ error: "Preencha todos os campos obrigatórios (slug, nome, whatsapp, senha_admin)." });
+        }
 
-    try {
+        const slugTratado = slug.toLowerCase().trim();
+
+        // 1. Verifica se o slug já existe na base de dados
+        const checkExist = await pool.query(
+            'SELECT slug FROM distribuidoras WHERE slug = $1',
+            [slugTratado]
+        );
+
+        if (checkExist.rows.length > 0) {
+            return res.status(409).json({
+                error: `O identificador '${slugTratado}' já está em uso por outra distribuidora. Escolha outro slug.`
+            });
+        }
+
+        // 2. Insere a nova loja apenas se não existir conflito
         await pool.query(`
-            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (slug) DO UPDATE
             SET nome = EXCLUDED.nome,
                 whatsapp = EXCLUDED.whatsapp,
                 senha_admin = EXCLUDED.senha_admin,
-                preco_gas = EXCLUDED.preco_gas
+                preco_gas = EXCLUDED.preco_gas,
                 preco_agua = EXCLUDED.preco_agua;
         `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00]);
 
         res.json({ message: `Distribuidora '${slug}' cadastrada/atualizada com sucesso!` });
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("Erro no cadastro:", err);
+        return res.status(500).json({ error: err.message });
     }
 });
 
@@ -81,7 +98,7 @@ app.get('/api/:slug/precos', async (req, res) => {
     const { slug } = req.params;
     try {
         const result = await pool.query(
-            'SELECT nome, whatsapp, preco_gas, preco_agua FROM distribuidoras WHERE slug = $1',
+            'SELECT nome, whatsapp, preco_gas, preco_agua, logo_url FROM distribuidoras WHERE slug = $1',
             [slug.toLowerCase()]     
         );
 
@@ -94,7 +111,8 @@ app.get('/api/:slug/precos', async (req, res) => {
             nome: row.nome,
             whatsapp: row.whatsapp,
             preco_gas: parseFloat(row.preco_gas),
-            preco_agua: parseFloat(row.preco_agua)
+            preco_agua: parseFloat(row.preco_agua),
+            logo_url: row.logo_url || ''
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
