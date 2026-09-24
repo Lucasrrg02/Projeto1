@@ -49,7 +49,7 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
     const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
 
     const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
-    
+
     if (!senha_mestre || senha_mestre !== SENHA_MESTRE_SISTEMA) {
         return res.status(401).json({ error: "Acesso negado: Senha Mestre Do Sistema incorreta!" });
     }
@@ -66,7 +66,7 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
             SET nome = EXCLUDED.nome,
                 whatsapp = EXCLUDED.whatsapp,
                 senha_admin = EXCLUDED.senha_admin,
-                preco_gas = EXCLUDED.preco_gas
+                preco_gas = EXCLUDED.preco_gas,
                 preco_agua = EXCLUDED.preco_agua;
         `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00]);
 
