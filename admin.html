@@ -114,9 +114,9 @@
             </div>
 
             <div class="form-group">
-                <label for="logoUrl">URL da Logo (Link da Imagem)</label>
-                <input type="url" id="logoUrl" placeholder="https://exemplo.com/logo.png">
-                <p class="help-text">Cole o link público de uma imagem PNG ou JPG da marca.</p>
+                <label for="logoFile">Logo da Empresa (Upload da Imagem)</label>
+                <input type="file"id="logoFile" accept="image/*">
+                <p class="help-text">Seleciona uma imagem (PNG ou JPG) do seu PC ou celular (Máx. 1MB).</p>
             </div>
 
             <div class="form-group">
@@ -155,11 +155,25 @@
             const senha_mestre = document.getElementById('senhaMestre').value;
             const slug = document.getElementById('slug').value.trim();
             const nome = document.getElementById('nome').value.trim();
-            const logo_url = document.getElementById('logoUrl').value.trim();
             const whatsapp = document.getElementById('whatsapp').value.trim();
             const senha_admin = document.getElementById('senhaAdmin').value;
             const preco_gas = parseFloat(document.getElementById('precoGas').value);
             const preco_agua = parseFloat(document.getElementById('precoAgua').value);
+            const logoFileInput = document.getElementById('logoFile');
+            let logo_url = '';
+
+            if (logoFileInput && logoFileInput.files.length > 0) {
+                const file = logoFileInput.files[0];
+
+                if (file.size > 1024 * 1024) {
+                    msgDiv.className = 'erro';
+                    msgDiv.textContent = 'A imagem é muito grande! Escolha um arquivo de até 1MB.';
+                    msgDiv.style.display = 'block';
+                    return;
+                }
+
+                logo_url = await converterImagemParaBase64(file);
+            }
 
             const msgDiv = document.getElementById('mensagem');
             msgDiv.style.display = 'none';
@@ -198,6 +212,15 @@
                 msgDiv.style.display = 'block';
             }
         });
+
+        function converterImagemParaBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
 </script>
 
 </body>
