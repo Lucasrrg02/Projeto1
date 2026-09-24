@@ -66,7 +66,7 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
             SET nome = EXCLUDED.nome,
                 whatsapp = EXCLUDED.whatsapp,
                 senha_admin = EXCLUDED.senha_admin,
-                preco_gas = EXCLUDED.preco_gas
+                preco_gas = EXCLUDED.preco_gas,
                 preco_agua = EXCLUDED.preco_agua;
         `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00]);
 
