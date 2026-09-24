@@ -114,6 +114,12 @@
             </div>
 
             <div class="form-group">
+                <label for="logoUrl">URL da Logo (Link da Imagem)</label>
+                <input type="url" id="logoUrl" placeholder="https://exemplo.com/logo.png">
+                <p class="help-text">Cole o link público de uma imagem PNG ou JPG da marca.</p>
+            </div>
+
+            <div class="form-group">
                 <label for="whatsapp">WhatsApp (Com DDD)</label>
                 <input type="text" id="whatsapp" placeholder="ex: 5514999999999" required>
                 <p class="help-text">Insira com o codigo do país (55) e DDD, apenas números.</p>
@@ -149,6 +155,7 @@
             const senha_mestre = document.getElementById('senhaMestre').value;
             const slug = document.getElementById('slug').value.trim();
             const nome = document.getElementById('nome').value.trim();
+            const logo_url = document.getElementById('logoUrl').value.trim();
             const whatsapp = document.getElementById('whatsapp').value.trim();
             const senha_admin = document.getElementById('senhaAdmin').value;
             const preco_gas = parseFloat(document.getElementById('precoGas').value);
@@ -168,7 +175,8 @@
                         whatsapp,
                         senha_admin,
                         preco_gas,
-                        preco_agua
+                        preco_agua,
+                        logo_url
                     })
                 });
 

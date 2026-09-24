@@ -23,13 +23,14 @@ async function inicializarBanco() {
                 whatsapp VARCHAR(20) NOT NULL,
                 senha_admin VARCHAR(100) NOT NULL,
                 preco_gas DECIMAL(10,2) NOT NULL DEFAULT 135.00,
-                preco_agua DECIMAL(10,2) NOT NULL DEFAULT 20.00
+                preco_agua DECIMAL(10,2) NOT NULL DEFAULT 20.00,
+                logo_url TEXT
             );
         `);
 
         // Insere a distribuidora padrão caso o banco esteja limpo
         await pool.query(`
-            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url)
             VALUES ('padrao', 'Disk Gás & Água Principal', '5514996905008', '123456', 135.00, 20.00)
             ON CONFLICT (slug) DO NOTHING;
         `);
@@ -47,7 +48,7 @@ app.get('/', (req, res) => {
 // 1. Cadastrar/Criar Nova Distribuidora
 app.post('/api/admin/distribuidoras', async (req, res) => {
     try {
-        const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
+        const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url, senha_mestre } = req.body;
 
         const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
 
@@ -75,7 +76,7 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
 
         // 2. Insere a nova loja apenas se não existir conflito
         await pool.query(`
-            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (slug) DO NOTHING;
         `, [
@@ -84,7 +85,8 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
             whatsapp,
             senha_admin,
             parseFloat(preco_gas) || 135.00,
-            parseFloat(preco_agua) || 20.00
+            parseFloat(preco_agua) || 20.00,
+            logo_url || ''
         ]);
 
         // se nenhuma linha foi afetada, significa q ja tinha no banco de dados
@@ -106,7 +108,7 @@ app.get('/api/:slug/precos', async (req, res) => {
     const { slug } = req.params;
     try {
         const result = await pool.query(
-            'SELECT nome, whatsapp, preco_gas, preco_agua FROM distribuidoras WHERE slug = $1',
+            'SELECT nome, whatsapp, preco_gas, preco_agua, logo_url FROM distribuidoras WHERE slug = $1',
             [slug.toLowerCase()]     
         );
 
@@ -119,7 +121,8 @@ app.get('/api/:slug/precos', async (req, res) => {
             nome: row.nome,
             whatsapp: row.whatsapp,
             preco_gas: parseFloat(row.preco_gas),
-            preco_agua: parseFloat(row.preco_agua)
+            preco_agua: parseFloat(row.preco_agua),
+            logo_url: row.logo_url || ''
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
