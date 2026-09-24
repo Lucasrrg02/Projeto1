@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
 
 // 1. Cadastrar/Criar Nova Distribuidora
 app.post('/api/admin/distribuidoras', async (req, res) => {
-    const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua } = req.body;
+    const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, senha_mestre } = req.body;
 
     const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE || "senha_de_teste_local";
 
@@ -63,7 +63,11 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
             INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua)
             VALUES ($1, $2, $3, $4, $5, $6)
             ON CONFLICT (slug) DO UPDATE
-            SET nome = EXCLUDED.nome, whatsapp = EXCLUDED.whatsapp, senha_admin = EXCLUDED.senha_admin;
+            SET nome = EXCLUDED.nome,
+                whatsapp = EXCLUDED.whatsapp,
+                senha_admin = EXCLUDED.senha_admin,
+                preco_gas = EXCLUDED.preco_gas
+                preco_agua = EXCLUDED.preco_agua;
         `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00]);
 
         res.json({ message: `Distribuidora '${slug}' cadastrada/atualizada com sucesso!` });
