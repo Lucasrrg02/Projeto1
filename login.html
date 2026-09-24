@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Area do Cliente</title>
+    <style>
+            * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+            body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+            .card { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 380px; }
+            h2 { text-align: center; margin-bottom: 20px; color: #333; }
+            .form-group { margin-bottom: 15px }
+            label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+            input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+            button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+            button:hover { background: #0056b3; }
+            #mensagem { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; display: none; font-weight: bold; }
+            .erro { background: #f8d7da; color: #721c24; }
+            .sucesso { background: #d4edda; color: #155724; }
+        </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>Entrar no Painel</h2>
+        <form id="formLogin">
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" id="email" placeholder="seu@email.com" required>
+            </div>
+            <div class="form-group">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" placeholder="Digite sua senha" required>
+            </div>
+            <button type="submit">Entrar</button>
+        </form>
+        <div id="mensagem"></div>
+    </div>
+
+    <script>
+        const API_URL = "https://disk-gas-api.onrender.com";
+
+        document.getElementById('formLogin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            const senha = document.getElementById('senha').value;
+            const msgDiv = document.getElementById('mensagem');
+            msgDiv.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    msgDiv.className = 'sucesso';
+                    msgDiv.textContent = 'Login bem-sucedido! Redirecionando...';
+                    msgDiv.style.display = 'block';
+
+                    // Guarda o token de acesso no navegador
+                    localStorage.setItem('token_distribuidora', data.token);
+
+                    setTimeout(() => {
+                        window.location.href = 'dashboard.html';
+                    }, 1000);
+                } else {
+                    msgDiv.className = 'erro';
+                    msgDiv.textContent = data.error || 'Erro ao realizar login.';
+                    msgDiv.style.display = 'block';
+                }
+            } catch (err) {
+                msgDiv.className = 'erro';
+                msgDiv.textContent = 'Erro de conexão com o servidor.';
+                msgDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
