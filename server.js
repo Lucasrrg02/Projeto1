@@ -79,7 +79,218 @@ app.get('/', (req, res) => {
     res.send('API Disk Gás e Água Multi-tenant rodando!');
 });
 
-// 1. Cadastrar/Criar Nova Distribuidora (Admin Mestre)
+// =========================================================================
+// ROTAS DE AUTENTICAÇÃO E CADASTRO EM 2 ETAPAS
+// =========================================================================
+
+// ETAPA 1: Criar Conta de Usuário (Apenas E-mail e Senha)
+app.post('/api/auth/registrar-usuario', async (req, res) => {
+    try {
+        const { email, senha } = req.body;
+
+        if (!email || !senha) {
+            return res.status(400).json({ error: "Informe e-mail e senha para criar a conta." });
+        }
+
+        const emailTratado = email.toLowerCase().trim();
+
+        // Verifica se o e-mail já existe
+        const checkEmail = await pool.query('SELECT email FROM distribuidoras WHERE email = $1', [emailTratado]);
+        if (checkEmail.rows.length > 0) {
+            return res.status(409).json({ error: "Este e-mail já está cadastrado. Faça login para continuar." });
+        }
+
+        // Gera o hash da senha
+        const salt = await bcrypt.genSalt(10);
+        const senha_hash = await bcrypt.hash(senha, salt);
+
+        // Gera um slug temporário/pendente baseado no timestamp até o usuário criar a loja
+        const tempSlug = `user-${Date.now()}`;
+
+        await pool.query(`
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, email, senha_hash, preco_gas, preco_agua)
+            VALUES ($1, 'Minha Distribuidora', '00000000000', '123456', $2, $3, 135.00, 20.00)
+        `, [tempSlug, emailTratado, senha_hash]);
+
+        const token = jwt.sign({ slug: tempSlug }, JWT_SECRET, { expiresIn: '1d' });
+
+        res.status(201).json({
+            message: "Conta criada com sucesso!",
+            token
+        });
+
+    } catch (err) {
+        console.error("Erro ao criar conta:", err);
+        res.status(500).json({ error: "Erro interno ao criar conta." });
+    }
+});
+
+// ETAPA 2: Criar/Configurar a Distribuidora (Requer Token JWT da Etapa 1)
+app.post('/api/dashboard/criar-loja', autenticarToken, async (req, res) => {
+    try {
+        const { nome, slug, whatsapp } = req.body;
+
+        if (!nome || !slug || !whatsapp) {
+            return res.status(400).json({ error: "Preencha o nome da empresa, o link (slug) e o WhatsApp." });
+        }
+
+        const slugTratado = slug.toLowerCase().trim();
+
+        // Verifica se o slug escolhido já existe na base
+        const checkSlug = await pool.query('SELECT slug FROM distribuidoras WHERE slug = $1 AND slug != $2', [slugTratado, req.empresaSlug]);
+        if (checkSlug.rows.length > 0) {
+            return res.status(409).json({ error: "Este link (slug) já está em uso por outra distribuidora. Escolha outro." });
+        }
+
+        // Atualiza a conta temporária para os dados oficiais da loja
+        await pool.query(`
+            UPDATE distribuidoras 
+            SET slug = $1, nome = $2, whatsapp = $3 
+            WHERE slug = $4
+        `, [slugTratado, nome, whatsapp.trim(), req.empresaSlug]);
+
+        // Emite um novo Token com o Slug oficial da distribuidora
+        const novoToken = jwt.sign({ slug: slugTratado }, JWT_SECRET, { expiresIn: '1d' });
+
+        res.json({
+            message: "Distribuidora cadastrada com sucesso!",
+            token: novoToken,
+            slug: slugTratado
+        });
+
+    } catch (err) {
+        console.error("Erro ao cadastrar loja:", err);
+        res.status(500).json({ error: "Erro interno ao cadastrar distribuidora." });
+    }
+});
+
+// Rota de Login Tradicional
+app.post('/api/auth/login', async (req, res) => {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+        return res.status(400).json({ error: "Informe o e-mail e a senha." });
+    }
+
+    try {
+        const result = await pool.query('SELECT * FROM distribuidoras WHERE email = $1', [email.toLowerCase().trim()]);
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: "E-mail ou senha incorretos." });
+        }
+
+        const empresa = result.rows[0];
+
+        if (!empresa.senha_hash) {
+            return res.status(401).json({ error: "Esta conta ainda não possui senha de acesso cadastrada." });
+        }
+
+        const senhaValida = await bcrypt.compare(senha, empresa.senha_hash);
+        if (!senhaValida) {
+            return res.status(401).json({ error: "E-mail ou senha incorretos." });
+        }
+
+        const token = jwt.sign({ slug: empresa.slug }, JWT_SECRET, { expiresIn: '1d' });
+
+        res.json({
+            message: "Login realizado com sucesso!",
+            token,
+            slug: empresa.slug
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// =========================================================================
+// ROTAS DO PAINEL / DASHBOARD
+// =========================================================================
+
+// Buscar dados do Painel
+app.get('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT slug, nome, email, whatsapp, preco_gas, preco_agua, logo_url, status_loja, aviso_loja FROM distribuidoras WHERE slug = $1',
+            [req.empresaSlug]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Distribuidora não encontrada." });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Atualizar dados do Painel
+app.put('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
+    const { preco_gas, preco_agua, whatsapp, status_loja, aviso_loja, logo_url } = req.body;
+
+    try {
+        const precoGas = parseFloat(preco_gas);
+        const precoAgua = parseFloat(preco_agua);
+
+        if (isNaN(precoGas) || isNaN(precoAgua)) {
+            return res.status(400).json({ error: "Forneça valores válidos para os preços." });
+        }
+
+        if (!whatsapp || whatsapp.trim() === '') {
+            return res.status(400).json({ error: "O WhatsApp não pode ficar em branco." });
+        }
+
+        await pool.query(
+            `UPDATE distribuidoras 
+             SET preco_gas = $1, 
+                 preco_agua = $2, 
+                 whatsapp = $3, 
+                 status_loja = $4, 
+                 aviso_loja = $5, 
+                 logo_url = COALESCE($6, logo_url) 
+             WHERE slug = $7`,
+            [precoGas, precoAgua, whatsapp.trim(), status_loja !== undefined ? status_loja : true, aviso_loja || '', logo_url || null, req.empresaSlug]
+        );
+
+        res.json({ message: "Dados da distribuidora atualizados com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Alterar Senha do Painel
+app.put('/api/dashboard/alterar-senha', autenticarToken, async (req, res) => {
+    const { senha_atual, nova_senha } = req.body;
+
+    if (!senha_atual || !nova_senha) {
+        return res.status(400).json({ error: "Informe a senha atual e a nova senha." });
+    }
+
+    try {
+        const result = await pool.query('SELECT senha_hash FROM distribuidoras WHERE slug = $1', [req.empresaSlug]);
+        const empresa = result.rows[0];
+
+        const senhaValida = await bcrypt.compare(senha_atual, empresa.senha_hash);
+        if (!senhaValida) {
+            return res.status(401).json({ error: "Senha atual incorreta." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const nova_senha_hash = await bcrypt.hash(nova_senha, salt);
+
+        await pool.query('UPDATE distribuidoras SET senha_hash = $1 WHERE slug = $2', [nova_senha_hash, req.empresaSlug]);
+
+        res.json({ message: "Senha alterada com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// =========================================================================
+// ROTAS PÚBLICAS E ADMINISTRAÇÃO MESTRE
+// =========================================================================
+
+// Cadastrar Distribuidora via Admin Mestre (Mantedo como opção)
 app.post('/api/admin/distribuidoras', async (req, res) => {
     try {
         const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url, senha_mestre, email, senha_login } = req.body;
@@ -134,125 +345,7 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
     }
 });
 
-// 2. Rota de Login
-app.post('/api/auth/login', async (req, res) => {
-    const { email, senha } = req.body;
-
-    if (!email || !senha) {
-        return res.status(400).json({ error: "Informe o e-mail e a senha." });
-    }
-
-    try {
-        const result = await pool.query('SELECT * FROM distribuidoras WHERE email = $1', [email.toLowerCase().trim()]);
-
-        if (result.rows.length === 0) {
-            return res.status(401).json({ error: "E-mail ou senha incorretos." });
-        }
-
-        const empresa = result.rows[0];
-
-        if (!empresa.senha_hash) {
-            return res.status(401).json({ error: "Esta conta ainda não possui senha de acesso cadastrada." });
-        }
-
-        const senhaValida = await bcrypt.compare(senha, empresa.senha_hash);
-        if (!senhaValida) {
-            return res.status(401).json({ error: "E-mail ou senha incorretos." });
-        }
-
-        const token = jwt.sign({ slug: empresa.slug }, JWT_SECRET, { expiresIn: '1d' });
-
-        res.json({
-            message: "Login realizado com sucesso!",
-            token,
-            slug: empresa.slug
-        });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 3. Buscar dados do Painel (Inclui status_loja e aviso_loja)
-app.get('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
-    try {
-        const result = await pool.query(
-            'SELECT slug, nome, email, whatsapp, preco_gas, preco_agua, logo_url, status_loja, aviso_loja FROM distribuidoras WHERE slug = $1',
-            [req.empresaSlug]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Distribuidora não encontrada." });
-        }
-
-        res.json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 4. Atualizar dados do Painel (Preços, WhatsApp, Status, Aviso e Logo)
-app.put('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
-    const { preco_gas, preco_agua, whatsapp, status_loja, aviso_loja, logo_url } = req.body;
-
-    try {
-        const precoGas = parseFloat(preco_gas);
-        const precoAgua = parseFloat(preco_agua);
-
-        if (isNaN(precoGas) || isNaN(precoAgua)) {
-            return res.status(400).json({ error: "Forneça valores válidos para os preços." });
-        }
-
-        if (!whatsapp || whatsapp.trim() === '') {
-            return res.status(400).json({ error: "O WhatsApp não pode ficar em branco." });
-        }
-
-        await pool.query(
-            `UPDATE distribuidoras 
-             SET preco_gas = $1, 
-                 preco_agua = $2, 
-                 whatsapp = $3, 
-                 status_loja = $4, 
-                 aviso_loja = $5, 
-                 logo_url = COALESCE($6, logo_url) 
-             WHERE slug = $7`,
-            [precoGas, precoAgua, whatsapp.trim(), status_loja !== undefined ? status_loja : true, aviso_loja || '', logo_url || null, req.empresaSlug]
-        );
-
-        res.json({ message: "Dados da distribuidora atualizados com sucesso!" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 5. Alterar Senha do Painel
-app.put('/api/dashboard/alterar-senha', autenticarToken, async (req, res) => {
-    const { senha_atual, nova_senha } = req.body;
-
-    if (!senha_atual || !nova_senha) {
-        return res.status(400).json({ error: "Informe a senha atual e a nova senha." });
-    }
-
-    try {
-        const result = await pool.query('SELECT senha_hash FROM distribuidoras WHERE slug = $1', [req.empresaSlug]);
-        const empresa = result.rows[0];
-
-        const senhaValida = await bcrypt.compare(senha_atual, empresa.senha_hash);
-        if (!senhaValida) {
-            return res.status(401).json({ error: "Senha atual incorreta." });
-        }
-
-        const salt = await bcrypt.genSalt(10);
-        const nova_senha_hash = await bcrypt.hash(nova_senha, salt);
-
-        await pool.query('UPDATE distribuidoras SET senha_hash = $1 WHERE slug = $2', [nova_senha_hash, req.empresaSlug]);
-
-        res.json({ message: "Senha alterada com sucesso!" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
-// 6. Buscar dados e preços públicos (Retorna status e aviso para a loja pública)
+// Buscar dados e preços públicos
 app.get('/api/:slug/precos', async (req, res) => {
     const { slug } = req.params;
     try {
@@ -280,7 +373,7 @@ app.get('/api/:slug/precos', async (req, res) => {
     }
 });
 
-// 7. Atualizar preços por Senha Admin
+// Atualizar preços por Senha Admin
 app.post('/api/:slug/admin/precos', async (req, res) => {
     const { slug } = req.params;
     const { senha, gas, agua } = req.body;
