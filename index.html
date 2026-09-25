@@ -3,124 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disk Gás & Água - Pedido Rapido</title>
+    <title>Disk Gás e Água</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
+        .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
+        
+        .header-info { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; }
+        .logo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
+        h1 { font-size: 20px; color: #333; margin: 0; }
+        
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 12px; text-align: center; }
+        .aberto { background-color: #28a745; }
+        .fechado { background-color: #dc3545; }
 
-    <!-- Link Bonito -->
-         
-    <meta property="og:title" content="Disk Gás & Água - Faça seu pedido online!">
-    <meta property="og:description" content="Entregas rápidas de botijão de gás e galão de água. Peça direto pelo WhatsApp!">
-    <meta property="og:type" content="website">
+        .aviso-box { background-color: #e7f5ff; color: #0056b3; border: 1px solid #bbeeef; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-align: center; display: none; }
 
+        .produto-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .produto-nome { font-weight: bold; color: #333; font-size: 14px; }
+        .produto-preco { color: #28a745; font-size: 16px; font-weight: bold; }
+        
+        .qtd-selector { display: flex; align-items: center; gap: 8px; }
+        .qtd-btn { width: 28px; height: 28px; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .qtd-val { font-weight: bold; width: 20px; text-align: center; }
 
-    <!-- Icone -->
-    <link rel="shortcut icon" href="#">
-    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+        .form-group { margin-bottom: 12px; text-align: left; }
+        label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        textarea { resize: vertical; height: 60px; }
 
+        .btn-enviar { width: 100%; background-color: #25d366; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-enviar:hover { background-color: #1ebc57; }
+        .btn-desativado { background-color: #6c757d; cursor: not-allowed; }
 
-    <link rel="stylesheet" href="style.css">
+        #erro { color: #dc3545; font-weight: bold; display: none; text-align: center; }
+    </style>
 </head>
 <body>
 
-    <div id="toast-notification" class="toast hidden">Produto adicionado! </div>
-
-    <div class="container">
-    <header>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
-            <!-- Imagem da Logo -->
-            <img id="imgLogo" src="" alt="Logo" style="max-height: 48px; display: none; border-radius: 6px; object-fit: contain;">
-            <h1 id="nomeLoja">Disk Gás e Água</h1>
-        </div>
-        <p>Faça seu pedido online sem complicação!</p>
-    </header>
-
-    <main>
-        <!-- Produtos -->
-         <section class="produtos">
-            <div class="card-produto">
-                <h2> Botijão de Gás (13kg)</h2>
-                <p class="preco">R$ <span id="precoGas">135.00</span></p>
-                <div class="quantidade">
-                    <button type="button" class="btn-qtd" onclick="alterarQtd('gas', -1)" aria-label="Diminuir quantidade">-</button>
-                    <!-- Adicionamos inputmode e pattern para forçar teclado numerico -->
-                    <span id="qtdGas" class="qtd-display" inputmode="numeric" pattern="[0-9]*">0</span>
-                    <button type="button" class="btn-qtd" onclick="alterarQtd('gas', 1)" aria-label="Aumentar quantidade">+</button>
+    <div class="card">
+        <div id="conteudo-loja">
+            <div class="header-info">
+                <img id="imgLogo" src="https://via.placeholder.com/60" alt="Logo" class="logo">
+                <h1 id="nomeLoja">Carregando...</h1>
             </div>
-        </div>
 
-        <div class="card-produto">
-            <h2> Galão de Água (20L)</h2>
-            <p class="preco">R$ <span id="precoAgua">20.00</span></p>
-            <div class="quantidade">
-                <button type="button" class="btn-qtd" onclick="alterarQtd('agua', -1)" aria-label="Diminuir quantidade">-</button>
-                <!-- Adicionamos inputmode pra forçar teclado numerico -->
-                <span id="qtdAgua" class="qtd-display" inputmode="numeric" pattern="[0-9]*">0</span>
-                <button type="button" class="btn-qtd" onclick="alterarQtd('agua', 1)" aria-label="Aumentar quantidade">+</button>
+            <div style="text-align: center;">
+                <div id="statusBadge" class="status-badge aberto">Carregando...</div>
             </div>
+
+            <div id="avisoLoja" class="aviso-box"></div>
+
+            <!-- Seleção de Produtos -->
+            <div class="produto-box">
+                <div>
+                    <div class="produto-nome">🔥 Botijão de Gás 13kg</div>
+                    <div id="precoGas" class="produto-preco">R$ --,--</div>
+                </div>
+                <div class="qtd-selector">
+                    <button class="qtd-btn" onclick="alterarQtd('gas', -1)">-</button>
+                    <span id="qtdGas" class="qtd-val">0</span>
+                    <button class="qtd-btn" onclick="alterarQtd('gas', 1)">+</button>
+                </div>
+            </div>
+
+            <div class="produto-box">
+                <div>
+                    <div class="produto-nome">💧 Galão de Água 20L</div>
+                    <div id="precoAgua" class="produto-preco">R$ --,--</div>
+                </div>
+                <div class="qtd-selector">
+                    <button class="qtd-btn" onclick="alterarQtd('agua', -1)">-</button>
+                    <span id="qtdAgua" class="qtd-val">0</span>
+                    <button class="qtd-btn" onclick="alterarQtd('agua', 1)">+</button>
+                </div>
+            </div>
+
+            <!-- Formulário de Entrega do Cliente -->
+            <form id="formPedido" onsubmit="enviarPedido(event)">
+                <div class="form-group">
+                    <label>Seu Nome</label>
+                    <input type="text" id="clienteNome" required placeholder="Digite seu nome completo">
+                </div>
+
+                <div class="form-group">
+                    <label>Endereço de Entrega</label>
+                    <input type="text" id="clienteEndereco" required placeholder="Rua, Número e Bairro">
+                </div>
+
+                <div class="form-group">
+                    <label>Forma de Pagamento</label>
+                    <select id="formaPagamento" required>
+                        <option value="">Selecione...</option>
+                        <option value="Pix">Pix</option>
+                        <option value="Cartão de Crédito/Débito">Cartão de Crédito / Débito</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Observação / Troco</label>
+                    <textarea id="clienteObs" placeholder="Ex: Precisa de troco para R$ 100,00 ou ponto de referência"></textarea>
+                </div>
+
+                <button type="submit" id="btnEnviar" class="btn-enviar">Pedir pelo WhatsApp</button>
+            </form>
         </div>
-    </section>
 
-
-    <!-- Formulário de Entrega -->
-    <section class="form-entrega">
-        <h2>Dados para Entrega</h2>
-
-        <label for="nome">Seu Nome *:</label>
-        <input type="text" id="nome" placeholder="Ex: João Silva" required>
-
-        <label for="endereco">Endereço completo e Nº *:</label>
-        <input type="text" id="endereco" placeholder="Ex: Rua das Flores, 123 - Bairro Centro" required>
-
-        <label for="pagamento">Forma de Pagamento:</label>
-        <select id="pagamento">
-            <option value="Pix">Pix</option>
-            <option value="Cartao de Débito">Cartão de Débito</option>
-            <option value="Cartão de Crédito">Cartão de Crédito</option>
-            <option value="Dinheiro">Dinheiro</option>
-        </select>
-
-        <label for="observacao">Observações (ex: Troco para R$ 200):</label>
-        <input type="text" id="observacao" placeholder="Opcional">
-    </section>
-
-    <!-- Resumo do Pedido -->
-     <footer class="resumo">
-        <div class="total-box">
-            <span>Total:</span>
-            <strong>R$ <span id="totalPedido">0.00</span></strong>
-        </div>
-        <button id="btnEnviar" onclick="enviarPedido()"> Confirmar e Enviar no WhatsApp</button>
-    </footer>
-</main>
-
-<!-- 1. Botao para abrir a area do admin -->
-    <footer style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-        <button onclick="abrirModalAdmin()" style="background: none; border: none; color: #888; cursor: pointer; font-size: 12px; text-decoration: underline;">
-            Área do Administrador
-        </button>
-    </footer>
-
-</div>
-
-<!-- O bloco inteiro do modal admin -->
- <div id="modalAdmin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000;">
-    <div style="background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 320px; text-align: center;">
-        <h3 style="margin-top: 0; color: #333;">Atualizar Preços</h3>
-
-
-    <input type="password" id="senhaAdmin" placeholder="Senha do Admin" style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;">
-    <input type="number" step="0.01" id="novoPrecoGas" placeholder="Preço do Gás (R$)" style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;">
-    <input type="number" step="0.01" id="novoPrecoAgua" placeholder="Preço da Água (R$)" style="width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;">
-
-    <div style="display: flex; gap: 10px;">
-        <button onclick="salvarNovosPrecos()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Salvar</button>
-        <button onclick="fecharModalAdmin()" style="flex: 1; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Cancelar</button>
+        <div id="erro">Distribuidora não encontrada.</div>
     </div>
-</div>
-</div>
 
+    <script>
+        const API_URL = "https://disk-gas-api.onrender.com";
+        const urlParams = new URLSearchParams(window.location.search);
+        const lojaSlug = urlParams.get('loja') || 'padrao';
 
+        let dadosLoja = null;
+        let qtds = { gas: 0, agua: 0 };
+        let lojaAbertaAgora = false;
 
-<script src="app.js"></script>
+        function alterarQtd(tipo, val) {
+            if (qtds[tipo] + val >= 0) {
+                qtds[tipo] += val;
+                document.getElementById(tipo === 'gas' ? 'qtdGas' : 'qtdAgua').textContent = qtds[tipo];
+            }
+        }
 
+        // Função para validar se o relógio atual está dentro do horário de abertura/fechamento
+        function verificarHorarioFuncionamento(abertura, fechamento) {
+            const agora = new Date();
+            const [hAbre, mAbre] = abertura.split(':').map(Number);
+            const [hFecha, mFecha] = fechamento.split(':').map(Number);
+
+            const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
+            const minutosAbertura = hAbre * 60 + mAbre;
+            const minutosFechamento = hFecha * 60 + mFecha;
+
+            if (minutosFechamento < minutosAbertura) {
+                return minutosAtuais >= minutosAbertura || minutosAtuais < minutosFechamento;
+            }
+
+            return minutosAtuais >= minutosAbertura && minutosAtuais < minutosFechamento;
+        }
+
+        async function carregarLoja() {
+            try {
+                const response = await fetch(`${API_URL}/api/${lojaSlug}/precos`);
+                if (!response.ok) throw new Error("Erro ao carregar dados");
+
+                dadosLoja = await response.json();
+
+                document.getElementById('nomeLoja').textContent = dadosLoja.nome;
+                document.getElementById('precoGas').textContent = `R$ ${dadosLoja.preco_gas.toFixed(2)}`;
+                document.getElementById('precoAgua').textContent = `R$ ${dadosLoja.preco_agua.toFixed(2)}`;
+
+                if (dadosLoja.logo_url) {
+                    document.getElementById('imgLogo').src = dadosLoja.logo_url;
+                }
+
+                const avisoBox = document.getElementById('avisoLoja');
+                if (dadosLoja.aviso_loja && dadosLoja.aviso_loja.trim() !== '') {
+                    avisoBox.textContent = `📢 ${dadosLoja.aviso_loja}`;
+                    avisoBox.style.display = 'block';
+                }
+
+                const badge = document.getElementById('statusBadge');
+                const btn = document.getElementById('btnEnviar');
+
+                const hAbre = dadosLoja.horario_abertura || '07:00';
+                const hFecha = dadosLoja.horario_fechamento || '18:00';
+                const dentroDoHorario = verificarHorarioFuncionamento(hAbre, hFecha);
+
+                if (dadosLoja.status_loja && dentroDoHorario) {
+                    lojaAbertaAgora = true;
+                    badge.textContent = "ABERTO";
+                    badge.className = "status-badge aberto";
+                } else {
+                    lojaAbertaAgora = false;
+                    badge.textContent = "FECHADO";
+                    badge.className = "status-badge fechado";
+                    btn.textContent = `Loja Fechada (${hAbre} às ${hFecha})`;
+                    btn.classList.add('btn-desativado');
+                    btn.disabled = true;
+                }
+
+            } catch (err) {
+                document.getElementById('conteudo-loja').style.display = 'none';
+                document.getElementById('erro').style.display = 'block';
+            }
+        }
+
+        function enviarPedido(e) {
+            e.preventDefault();
+
+            if (!lojaAbertaAgora) return;
+
+            if (qtds.gas === 0 && qtds.agua === 0) {
+                alert("Por favor, adicione pelo menos 1 item (Gás ou Água) ao seu pedido.");
+                return;
+            }
+
+            const nome = document.getElementById('clienteNome').value.trim();
+            const endereco = document.getElementById('clienteEndereco').value.trim();
+            const pagamento = document.getElementById('formaPagamento').value;
+            const obs = document.getElementById('clienteObs').value.trim();
+
+            let itens = [];
+            let total = 0;
+
+            if (qtds.gas > 0) {
+                const subTotalGas = qtds.gas * dadosLoja.preco_gas;
+                itens.push(`• *${qtds.gas}x* Botijão de Gás (R$ ${subTotalGas.toFixed(2)})`);
+                total += subTotalGas;
+            }
+
+            if (qtds.agua > 0) {
+                const subTotalAgua = qtds.agua * dadosLoja.preco_agua;
+                itens.push(`• *${qtds.agua}x* Galão de Água (R$ ${subTotalAgua.toFixed(2)})`);
+                total += subTotalAgua;
+            }
+
+            let msg = `🛒 *NOVO PEDIDO - ${dadosLoja.nome.toUpperCase()}*\n\n`;
+            msg += `*Itens do Pedido:*\n${itens.join('\n')}\n\n`;
+            msg += `💰 *Valor Total:* R$ ${total.toFixed(2)}\n\n`;
+            msg += `👤 *Cliente:* ${nome}\n`;
+            msg += `📍 *Endereço:* ${endereco}\n`;
+            msg += `💳 *Pagamento:* ${pagamento}\n`;
+
+            if (obs !== '') {
+                msg += `📝 *Obs:* ${obs}\n`;
+            }
+
+            const urlWhatsapp = `https://wa.me/${dadosLoja.whatsapp}?text=${encodeURIComponent(msg)}`;
+            window.open(urlWhatsapp, '_blank');
+        }
+
+        carregarLoja();
+    </script>
 </body>
 </html>

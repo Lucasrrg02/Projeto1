@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta - Passo 1</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 10px; width: 100%; max-width: 380px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #0066ff; margin-bottom: 8px; }
+        p { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #0066ff; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #004ecc; }
+        .link-login { text-align: center; margin-top: 15px; font-size: 14px; }
+        #msg { padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; text-align: center; font-size: 14px; background: #fee2e2; color: #b91c1c; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Passo 1 de 2</h2>
+        <p>Crie sua conta de acesso</p>
+        <div id="msg"></div>
+        <form id="formConta">
+            <div class="form-group">
+                <label>Seu E-mail</label>
+                <input type="email" id="email" required placeholder="seuemail@exemplo.com">
+            </div>
+            <div class="form-group">
+                <label>Sua Senha</label>
+                <input type="password" id="senha" required placeholder="Crie uma senha forte">
+            </div>
+            <button type="submit">Continuar para Criar a Loja →</button>
+        </form>
+        <div class="link-login">
+            Já tem uma conta? <a href="login.html">Fazer Login</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://disk-gas-api.onrender.com";
+
+        document.getElementById('formConta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const senha = document.getElementById('senha').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/auth/registrar-usuario`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    const msg = document.getElementById('msg');
+                    msg.textContent = data.error;
+                    msg.style.display = 'block';
+                } else {
+                    localStorage.setItem('token_distribuidora', data.token);
+                    window.location.href = 'criar-loja.html';
+                }
+            } catch (err) {
+                alert('Erro na conexão com o servidor.');
+            }
+        });
+    </script>
+</body>
+</html>

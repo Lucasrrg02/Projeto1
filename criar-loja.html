@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Distribuidora - Passo 2</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 10px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #0066ff; margin-bottom: 8px; }
+        p { text-align: center; color: #666; font-size: 14px; margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #22c55e; color: white; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #16a34a; }
+        #msg { padding: 10px; border-radius: 6px; margin-bottom: 15px; display: none; text-align: center; font-size: 14px; background: #fee2e2; color: #b91c1c; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>Passo 2 de 2</h2>
+        <p>Cadastre os dados da sua empresa</p>
+        <div id="msg"></div>
+        <form id="formLoja">
+            <div class="form-group">
+                <label>Nome da Distribuidora</label>
+                <input type="text" id="nome" required placeholder="Ex: Disk Gás Express">
+            </div>
+            <div class="form-group">
+                <label>Identificador / Link da Loja (Slug)</label>
+                <input type="text" id="slug" required placeholder="Ex: gas-express" oninput="this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, '')">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp da Distribuidora</label>
+                <input type="text" id="whatsapp" required placeholder="5514999999999">
+            </div>
+            <button type="submit">Concluir e Abrir Painel 🎉</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = "https://disk-gas-api.onrender.com";
+        const token = localStorage.getItem('token_distribuidora');
+
+        if (!token) { window.location.href = 'cadastro.html'; }
+
+        document.getElementById('formLoja').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nome = document.getElementById('nome').value;
+            const slug = document.getElementById('slug').value;
+            const whatsapp = document.getElementById('whatsapp').value;
+
+            try {
+                const res = await fetch(`${API_URL}/api/dashboard/criar-loja`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ nome, slug, whatsapp })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    const msg = document.getElementById('msg');
+                    msg.textContent = data.error;
+                    msg.style.display = 'block';
+                } else {
+                    localStorage.setItem('token_distribuidora', data.token);
+                    window.location.href = 'dashboard.html';
+                }
+            } catch (err) {
+                alert('Erro na conexão com o servidor.');
+            }
+        });
+    </script>
+</body>
+</html>
