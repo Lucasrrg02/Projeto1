@@ -120,12 +120,30 @@
 
         let dadosLoja = null;
         let qtds = { gas: 0, agua: 0 };
+        let lojaAbertaAgora = false;
 
         function alterarQtd(tipo, val) {
             if (qtds[tipo] + val >= 0) {
                 qtds[tipo] += val;
                 document.getElementById(tipo === 'gas' ? 'qtdGas' : 'qtdAgua').textContent = qtds[tipo];
             }
+        }
+
+        // Função para validar se o relógio atual está dentro do horário de abertura/fechamento
+        function verificarHorarioFuncionamento(abertura, fechamento) {
+            const agora = new Date();
+            const [hAbre, mAbre] = abertura.split(':').map(Number);
+            const [hFecha, mFecha] = fechamento.split(':').map(Number);
+
+            const minutosAtuais = agora.getHours() * 60 + agora.getMinutes();
+            const minutosAbertura = hAbre * 60 + mAbre;
+            const minutosFechamento = hFecha * 60 + mFecha;
+
+            if (minutosFechamento < minutosAbertura) {
+                return minutosAtuais >= minutosAbertura || minutosAtuais < minutosFechamento;
+            }
+
+            return minutosAtuais >= minutosAbertura && minutosAtuais < minutosFechamento;
         }
 
         async function carregarLoja() {
@@ -152,13 +170,19 @@
                 const badge = document.getElementById('statusBadge');
                 const btn = document.getElementById('btnEnviar');
 
-                if (dadosLoja.status_loja) {
+                const hAbre = dadosLoja.horario_abertura || '07:00';
+                const hFecha = dadosLoja.horario_fechamento || '18:00';
+                const dentroDoHorario = verificarHorarioFuncionamento(hAbre, hFecha);
+
+                if (dadosLoja.status_loja && dentroDoHorario) {
+                    lojaAbertaAgora = true;
                     badge.textContent = "ABERTO";
                     badge.className = "status-badge aberto";
                 } else {
+                    lojaAbertaAgora = false;
                     badge.textContent = "FECHADO";
                     badge.className = "status-badge fechado";
-                    btn.textContent = "Loja Fechada no Momento";
+                    btn.textContent = `Loja Fechada (${hAbre} às ${hFecha})`;
                     btn.classList.add('btn-desativado');
                     btn.disabled = true;
                 }
@@ -172,7 +196,7 @@
         function enviarPedido(e) {
             e.preventDefault();
 
-            if (!dadosLoja || !dadosLoja.status_loja) return;
+            if (!lojaAbertaAgora) return;
 
             if (qtds.gas === 0 && qtds.agua === 0) {
                 alert("Por favor, adicione pelo menos 1 item (Gás ou Água) ao seu pedido.");
