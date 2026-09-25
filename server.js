@@ -2,10 +2,19 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true}));
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true}));
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -22,10 +31,19 @@ async function inicializarBanco() {
                 nome VARCHAR(100) NOT NULL,
                 whatsapp VARCHAR(20) NOT NULL,
                 senha_admin VARCHAR(100) NOT NULL,
+                email VARCHAR(150) UNIQUE,
+                senha_hash VARCHAR(255),
                 preco_gas DECIMAL(10,2) NOT NULL DEFAULT 135.00,
                 preco_agua DECIMAL(10,2) NOT NULL DEFAULT 20.00,
                 logo_url TEXT
             );
+        `);
+
+
+        await pool.query(`
+            ALTER TABLE distribuidoras
+            ADD COLUMN IF NOT EXISTS email VARCHAR(150) UNIQUE,
+            ADD COLUMN IF NOT EXISTS senha_hash VARCHAR(255);
         `);
 
         // Insere a distribuidora padrão caso o banco esteja limpo
@@ -40,6 +58,22 @@ async function inicializarBanco() {
 }
 inicializarBanco();
 
+function autenticarToken(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ error: "Acesso negado. Faça login para continuar." });
+    }
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+        if (err) {
+            return res.status(403).json({ error: "Sessão expirada ou token inválido." });
+        }
+        req.empresaSlug = decoded.slug;
+        next();
+    });
+}
+
 // Rota de teste
 app.get('/', (req, res) => {
     res.send('API Disk Gás e Água Multi-tenant rodando!');
@@ -48,7 +82,7 @@ app.get('/', (req, res) => {
 // 1. Cadastrar/Criar Nova Distribuidora (Bloqueia sobrescrita se o slug já existir)
 app.post('/api/admin/distribuidoras', async (req, res) => {
     try {
-        const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url, senha_mestre } = req.body;
+        const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url, senha_mestre, email, senha_login } = req.body;
 
     const SENHA_MESTRE_SISTEMA = process.env.SENHA_MESTRE;
     
@@ -74,23 +108,88 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
             });
         }
 
+        // Gera o hash da senha de login do painel
+        let senha_hash = null;
+        if (senha_login) {
+            const salt = await bcrypt.genSalt(10);
+            senha_hash = await bcrypt.hash(senha_login, salt);
+        }
+
         // 2. Insere a nova loja apenas se não existir conflito
         await pool.query(`
-            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO distribuidoras (slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url, email, senha_hash)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             ON CONFLICT (slug) DO UPDATE
             SET nome = EXCLUDED.nome,
                 whatsapp = EXCLUDED.whatsapp,
                 senha_admin = EXCLUDED.senha_admin,
                 preco_gas = EXCLUDED.preco_gas,
                 preco_agua = EXCLUDED.preco_agua,
-                logo_url = EXCLUDED.logo_url;
-        `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00, logo_url || null]);
+                logo_url = EXCLUDED.logo_url,
+                email = EXCLUDED.email,
+                senha_hash = EXCLUDED.senha_hash;
+        `, [slug.toLowerCase().trim(), nome, whatsapp, senha_admin, preco_gas || 135.00, preco_agua || 20.00, logo_url || null, email ? email.toLowerCase().trim() : null, senha_hash]);
 
         res.json({ message: `Distribuidora '${slug}' cadastrada/atualizada com sucesso!` });
     } catch (err) {
         console.error("Erro no cadastro:", err);
         return res.status(500).json({ error: err.message });
+    }
+});
+
+// Rota de Login do Cliente / Distribuidora
+app.post('/api/auth/login', async (req, res) => {
+    const { email, senha } = req.body;
+
+    if (!email || !senha) {
+        return res.status(400).json({ error: "Informe o e-mail e a senha." });
+    }
+
+    try {
+        const result = await pool.query('SELECT * FROM distribuidoras WHERE email = $1', [email.toLowerCase().trim()]);
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: "E-mail ou senha incorretos." });
+        }
+
+        const empresa = result.rows[0];
+
+        if (!empresa.senha_hash) {
+            return res.status(401).json({ error: "Esta conta ainda não possui senha de acesso cadastrada." });
+        }
+
+        const senhaValida = await bcrypt.compare(senha, empresa.senha_hash);
+        if (!senhaValida) {
+            return res.status(401).json({ error: "E-mail ou senha incorretos." });
+        }
+
+        const token = jwt.sign({ slug: empresa.slug }, JWT_SECRET, { expiresIn: '1d' });
+
+        res.json({
+            message: "Login realizado com sucesso!",
+            token,
+            slug: empresa.slug
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Rota do Painel do Cliente
+app.get('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT slug, nome, email, whatsapp, preco_gas, preco_agua, logo_url FROM distribuidoras WHERE slug = $1',
+            [req.empresaSlug]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: "Distribuidora não encontrada." });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 
@@ -153,6 +252,58 @@ app.post('/api/:slug/admin/precos', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Rota para o cliente atualizar seus próprios dados (Preços e Logo)
+app.put('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
+    const { preco_gas, preco_agua, logo_url } = req.body;
+
+    try {
+        const precoGas = parseFloat(preco_gas);
+        const precoAgua = parseFloat(preco_agua);
+
+        if (isNaN(precoGas) || isNaN(precoAgua)) {
+            return res.status(400).json({ error: "Forneça valores válidos para os preços." });
+        }
+
+        await pool.query(
+            'UPDATE distribuidoras SET preco_gas = $1, preco_agua = $2, logo_url = COALESCE($3, logo_url) WHERE slug = $4',
+            [precoGas, precoAgua, logo_url || null, req.empresaSlug]
+        );
+
+        res.json({ message: "Dados atualizados com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Rota para alterar a senha de acesso ao painel
+app.put('/api/dashboard/alterar-senha', autenticarToken, async (req, res) => {
+    const { senha_atual, nova_senha } = req.body;
+
+    if (!senha_atual || !nova_senha) {
+        return res.status(400).json({ error: "Informe a senha atual e a nova senha." });
+    }
+
+    try {
+        const result = await pool.query('SELECT senha_hash FROM distribuidoras WHERE slug = $1', [req.empresaSlug]);
+        const empresa = result.rows[0];
+
+        const senhaValida = await bcrypt.compare(senha_atual, empresa.senha_hash);
+        if (!senhaValida) {
+            return res.status(401).json({ error: "Senha atual incorreta." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const nova_senha_hash = await bcrypt.hash(nova_senha, salt);
+
+        await pool.query('UPDATE distribuidoras SET senha_hash = $1 WHERE slug = $2', [nova_senha_hash, req.empresaSlug]);
+
+        res.json({ message: "Senha alterada com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
