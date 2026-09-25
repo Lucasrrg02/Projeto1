@@ -131,6 +131,16 @@
             </div>
 
             <div class="form-group">
+                <label for="email">E-mail de Login do Cliente:</label>
+                <input type="email" id="email" placeholder="cliente@gmail.com">
+            </div>
+
+            <div class="form-group">
+                <label for="senha_login">Senha de Acesso ao Painel:</label>
+                <input type="password" id="senha_login" placeholder="Crie uma senha para o cliente">
+            </div>
+
+            <div class="form-group">
                 <label for="precoGas">Preço do Gás (R$)</label>
                 <input type="number" step="0.01" id="precoGas" value="135.00" required>
             </div>
@@ -157,6 +167,8 @@
             const nome = document.getElementById('nome').value.trim();
             const whatsapp = document.getElementById('whatsapp').value.trim();
             const senha_admin = document.getElementById('senhaAdmin').value;
+            const email = document.getElementById('email').value.trim();
+            const senha_login = document.getElementById('senha_login').value;
             const preco_gas = parseFloat(document.getElementById('precoGas').value);
             const preco_agua = parseFloat(document.getElementById('precoAgua').value);
             const logoFileInput = document.getElementById('logoFile');
@@ -190,7 +202,9 @@
                         senha_admin,
                         preco_gas,
                         preco_agua,
-                        logo_url
+                        logo_url,
+                        email: email || null,
+                        senha_login: senha_login || null
                     })
                 });
 

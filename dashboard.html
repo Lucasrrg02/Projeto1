@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Controle - Sua Distribuidora</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
+        body { background-color: #f4f6f9; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .header-painel { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
+        .logo-box { display: flex; align-items: center; gap: 15px; }
+        .logo-box img { max-height: 60px; border-radius: 6px; }
+        .status-card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .status-card p { margin-bottom: 10px; font-size: 15px; }
+        .btn-sair { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-loja { background: #28a745; color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; display: inline-block; margin-top: 15px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header-painel">
+            <div class="logo-box">
+                <img id="imgLogo" src="" alt="Logo" style="display: none;">
+                <div>
+                    <h1 id="nomeEmpresa">Carregando...</h1>
+                    <p id="emailEmpresa" style="color: #666;"></p>
+                </div>
+            </div>
+            <button class="btn-sair" onclick="sair()">Sair</button>
+        </div>
+
+        <div class="status-card">
+            <h3 style="margin-bottom: 15px;">Status da Sua Distribuidora</h3>
+            <p><strong>Identificador (Slug):</strong> <span id="slugEmpresa">-</span></p>
+            <p><strong>WhatsApp Cadastrado:</strong> <span id="whatsappEmpresa">-</span></p>
+            <p><strong>Preço do Gás:</strong> R$ <span id="precoGas">-</span></p>
+            <p><strong>Preço da Água:</strong> R$ <span id="precoAgua">-</span></p>
+
+            <a id="linkLoja" href="#" target="_blank" class="btn-loja">Ver Minha Loja Online</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://disk-gas-api.onrender.com";
+        const token = localStorage.getItem('token_distribuidora');
+
+        // Se não tiver token salvo, força o redirecionamento para a tela do login
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        async function carregarDados() {
+            try {
+                const response = await fetch(`${API_URL}/api/dashboard/meus-dados`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    sair();
+                    return;
+                }
+
+                const data = await response.json();
+
+                document.getElementById('nomeEmpresa').textContent = data.nome;
+                document.getElementById('emailEmpresa').textContent = data.email || 'E-mail não informado';
+                document.getElementById('slugEmpresa').textContent = data.slug;
+                document.getElementById('whatsappEmpresa').textContent = data.whatsapp;
+                document.getElementById('precoGas').textContent = parseFloat(data.preco_gas).toFixed(2);
+                document.getElementById('precoAgua').textContent = parseFloat(data.preco_agua).toFixed(2);
+
+                if (data.logo_url) {
+                    const img = document.getElementById('imgLogo');
+                    img.src = data.logo_url;
+                    img.style.display = 'block';
+                }
+
+                document.getElementById('linkLoja').href = `index.html?loja=${data.slug}`;
+
+            } catch (err) {
+                console.error("Erro ao carregar dados do painel:", err);
+            }
+        }
+
+        function sair() {
+            localStorage.removeItem('token_distribuidora');
+            window.location.href = 'login.html';
+        }
+
+        carregarDados();
+    </script>
+</body>
+</html>
