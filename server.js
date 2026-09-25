@@ -34,7 +34,9 @@ async function inicializarBanco() {
                 preco_agua DECIMAL(10,2) NOT NULL DEFAULT 20.00,
                 logo_url TEXT,
                 status_loja BOOLEAN DEFAULT true,
-                aviso_loja TEXT DEFAULT ''
+                aviso_loja TEXT DEFAULT '',
+                horario_abertura VARCHAR(5) DEFAULT '07:00',
+                horario_fechamento VARCHAR(5) DEFAULT '18:00'
             );
         `);
 
@@ -43,7 +45,9 @@ async function inicializarBanco() {
             ADD COLUMN IF NOT EXISTS email VARCHAR(150) UNIQUE,
             ADD COLUMN IF NOT EXISTS senha_hash VARCHAR(255),
             ADD COLUMN IF NOT EXISTS status_loja BOOLEAN DEFAULT true,
-            ADD COLUMN IF NOT EXISTS aviso_loja TEXT DEFAULT '';
+            ADD COLUMN IF NOT EXISTS aviso_loja TEXT DEFAULT '',
+            ADD COLUMN IF NOT EXISTS horario_abertura VARCHAR(5) DEFAULT '07:00',
+            ADD COLUMN IF NOT EXISTS horario_fechamento VARCHAR(5) DEFAULT '18:00';
         `);
 
         // Insere a distribuidora padrão caso o banco esteja limpo
@@ -210,7 +214,7 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT slug, nome, email, whatsapp, preco_gas, preco_agua, logo_url, status_loja, aviso_loja FROM distribuidoras WHERE slug = $1',
+            'SELECT slug, nome, email, whatsapp, preco_gas, preco_agua, logo_url, status_loja, aviso_loja, horario_abertura, horario_fechamento FROM distribuidoras WHERE slug = $1',
             [req.empresaSlug]
         );
 
@@ -226,7 +230,7 @@ app.get('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
 
 // Atualizar dados do Painel
 app.put('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
-    const { preco_gas, preco_agua, whatsapp, status_loja, aviso_loja, logo_url } = req.body;
+    const { preco_gas, preco_agua, whatsapp, status_loja, aviso_loja, logo_url, horario_abertura, horario_fechamento } = req.body;
 
     try {
         const precoGas = parseFloat(preco_gas);
@@ -247,9 +251,21 @@ app.put('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
                  whatsapp = $3, 
                  status_loja = $4, 
                  aviso_loja = $5, 
-                 logo_url = COALESCE($6, logo_url) 
-             WHERE slug = $7`,
-            [precoGas, precoAgua, whatsapp.trim(), status_loja !== undefined ? status_loja : true, aviso_loja || '', logo_url || null, req.empresaSlug]
+                 horario_abertura = $6, 
+                 horario_fechamento = $7, 
+                 logo_url = COALESCE($8, logo_url) 
+             WHERE slug = $9`,
+            [
+                precoGas, 
+                precoAgua, 
+                whatsapp.trim(), 
+                status_loja !== undefined ? status_loja : true, 
+                aviso_loja || '', 
+                horario_abertura || '07:00', 
+                horario_fechamento || '18:00', 
+                logo_url || null, 
+                req.empresaSlug
+            ]
         );
 
         res.json({ message: "Dados da distribuidora atualizados com sucesso!" });
@@ -290,7 +306,7 @@ app.put('/api/dashboard/alterar-senha', autenticarToken, async (req, res) => {
 // ROTAS PÚBLICAS E ADMINISTRAÇÃO MESTRE
 // =========================================================================
 
-// Cadastrar Distribuidora via Admin Mestre (Mantedo como opção)
+// Cadastrar Distribuidora via Admin Mestre (Mantido como opção)
 app.post('/api/admin/distribuidoras', async (req, res) => {
     try {
         const { slug, nome, whatsapp, senha_admin, preco_gas, preco_agua, logo_url, senha_mestre, email, senha_login } = req.body;
@@ -345,12 +361,12 @@ app.post('/api/admin/distribuidoras', async (req, res) => {
     }
 });
 
-// Buscar dados e preços públicos
+// Buscar dados e preços públicos (Retorna horários para a loja pública)
 app.get('/api/:slug/precos', async (req, res) => {
     const { slug } = req.params;
     try {
         const result = await pool.query(
-            'SELECT nome, whatsapp, preco_gas, preco_agua, logo_url, status_loja, aviso_loja FROM distribuidoras WHERE slug = $1',
+            'SELECT nome, whatsapp, preco_gas, preco_agua, logo_url, status_loja, aviso_loja, horario_abertura, horario_fechamento FROM distribuidoras WHERE slug = $1',
             [slug.toLowerCase()]     
         );
 
@@ -366,7 +382,9 @@ app.get('/api/:slug/precos', async (req, res) => {
             preco_agua: parseFloat(row.preco_agua),
             logo_url: row.logo_url || '',
             status_loja: row.status_loja !== false,
-            aviso_loja: row.aviso_loja || ''
+            aviso_loja: row.aviso_loja || '',
+            horario_abertura: row.horario_abertura || '07:00',
+            horario_fechamento: row.horario_fechamento || '18:00'
         });
     } catch (err) {
         res.status(500).json({ error: err.message });

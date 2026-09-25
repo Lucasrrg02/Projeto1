@@ -136,14 +136,14 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-    <div>
-        <h2>Painel Gestão</h2>
-        <nav>
-            <a href="#configuracoes" class="active">Configurações da Loja</a>
-        </nav>
+        <div>
+            <h2>Painel Gestão</h2>
+            <nav>
+                <a href="#configuracoes" class="active">Configurações da Loja</a>
+            </nav>
+        </div>
+        <button class="btn-logout" onclick="logout()">Sair do Painel</button>
     </div>
-    <button class="btn-logout" onclick="logout()">Sair do Painel</button>
-</div>
 
     <!-- Conteúdo Principal -->
     <div class="content">
@@ -170,11 +170,23 @@
                 <h2 class="section-title">Gerenciar Distribuidora</h2>
                 <form id="formAtualizar">
                     <div class="form-group">
-                        <label for="status_loja">Status de Funcionamento</label>
+                        <label for="status_loja">Status Manual da Loja</label>
                         <select id="status_loja">
-                            <option value="true">🟢 Aberta (Recebendo Pedidos)</option>
-                            <option value="false">🔴 Fechada (Fora de Expediente)</option>
+                            <option value="true">🟢 Aberta (Sempre Ativa)</option>
+                            <option value="false">🔴 Fechada Forçada (Manutenção/Feriado)</option>
                         </select>
+                    </div>
+
+                    <!-- Horário de Abertura e Fechamento -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label for="horario_abertura">Abre às</label>
+                            <input type="time" id="horario_abertura" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="horario_fechamento">Fecha às</label>
+                            <input type="time" id="horario_fechamento" required>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -249,14 +261,16 @@
                 document.getElementById('preco_agua').value = data.preco_agua;
                 document.getElementById('aviso_loja').value = data.aviso_loja || '';
                 document.getElementById('status_loja').value = data.status_loja !== false ? "true" : "false";
+                document.getElementById('horario_abertura').value = data.horario_abertura || '07:00';
+                document.getElementById('horario_fechamento').value = data.horario_fechamento || '18:00';
                 document.getElementById('btnVerLoja').href = `index.html?loja=${data.slug}`;
 
                 const badge = document.getElementById('badgeStatus');
                 if (data.status_loja !== false) {
-                    badge.textContent = "Loja Aberta";
+                    badge.textContent = `Loja Ativa (${data.horario_abertura || '07:00'} às ${data.horario_fechamento || '18:00'})`;
                     badge.className = "status-badge bg-aberto";
                 } else {
-                    badge.textContent = "Loja Fechada";
+                    badge.textContent = "Loja Fechada Manualmente";
                     badge.className = "status-badge bg-fechado";
                 }
 
@@ -277,6 +291,8 @@
             const preco_agua = document.getElementById('preco_agua').value;
             const status_loja = document.getElementById('status_loja').value === "true";
             const aviso_loja = document.getElementById('aviso_loja').value;
+            const horario_abertura = document.getElementById('horario_abertura').value;
+            const horario_fechamento = document.getElementById('horario_fechamento').value;
             const logoInput = document.getElementById('logoFile');
             let logo_url = null;
 
@@ -291,7 +307,16 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ whatsapp, preco_gas, preco_agua, status_loja, aviso_loja, logo_url })
+                    body: JSON.stringify({ 
+                        whatsapp, 
+                        preco_gas, 
+                        preco_agua, 
+                        status_loja, 
+                        aviso_loja, 
+                        horario_abertura, 
+                        horario_fechamento, 
+                        logo_url 
+                    })
                 });
 
                 const resData = await response.json();
