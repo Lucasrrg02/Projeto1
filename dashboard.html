@@ -3,53 +3,243 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Painel de Controle - Sua Distribuidora</title>
+    <title>Painel da Distribuidora - Dashboard</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
-        body { background-color: #f4f6f9; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .header-painel { display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 20px; }
-        .logo-box { display: flex; align-items: center; gap: 15px; }
-        .logo-box img { max-height: 60px; border-radius: 6px; }
-        .status-card { background: #f8f9fa; border: 1px solid #e9ecef; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .status-card p { margin-bottom: 10px; font-size: 15px; }
-        .btn-sair { background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-loja { background: #28a745; color: white; text-decoration: none; padding: 10px 15px; border-radius: 5px; display: inline-block; margin-top: 15px; font-weight: bold; }
+        :root {
+            --primary: #0066ff;
+            --primary-dark: #004ecc;
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --text-muted: #666666;
+            --border: #e0e0e0;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+        /* Sidebar Navegação */
+        .sidebar {
+            width: 250px;
+            background-color: #1e293b;
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .sidebar h2 { font-size: 20px; margin-bottom: 30px; text-align: center; color: #38bdf8; }
+        .sidebar nav a {
+            display: block;
+            color: #94a3b8;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .sidebar nav a:hover, .sidebar nav a.active { background-color: #334155; color: #fff; }
+
+        .btn-logout {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+
+        /* Conteúdo Principal */
+        .content { flex: 1; padding: 30px; overflow-y: auto; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .header h1 { font-size: 24px; }
+        .header .store-info { display: flex; align-items: center; gap: 10px; }
+        .header img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+
+        /* Grid de Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .card h3 { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
+        .card .value { font-size: 24px; font-weight: bold; color: var(--primary); }
+
+        /* Gráfico de Métricas */
+        .chart-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        canvas { max-width: 100%; height: 220px; }
+
+        /* Form Grid */
+        .section-title { font-size: 18px; margin-bottom: 15px; color: var(--text); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; }
+
+        .btn-submit {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-submit:hover { background-color: var(--primary-dark); }
+
+        .btn-link {
+            display: inline-block;
+            background-color: #22c55e;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        #mensagem { padding: 12px; border-radius: 6px; margin-bottom: 20px; display: none; font-weight: bold; }
+        .sucesso { background: #dcfce7; color: #15803d; }
+        .erro { background: #fee2e2; color: #b91c1c; }
+
+        @media(max-width: 768px) {
+            body { flex-direction: column; }
+            .sidebar { width: 100%; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="header-painel">
-            <div class="logo-box">
-                <img id="imgLogo" src="" alt="Logo" style="display: none;">
-                <div>
-                    <h1 id="nomeEmpresa">Carregando...</h1>
-                    <p id="emailEmpresa" style="color: #666;"></p>
-                </div>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div>
+            <h2>Painel Gestão</h2>
+            <nav>
+                <a href="#dashboard" class="active">Dashboard</a>
+                <a href="#configuracoes">Preços & Logo</a>
+                <a href="#seguranca">Segurança</a>
+            </nav>
+        </div>
+        <button class="btn-logout" onclick="logout()">Sair do Painel</button>
+    </div>
+
+    <!-- Conteúdo Principal -->
+    <div class="content">
+        
+        <div id="mensagem"></div>
+
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <h1 id="nomeLoja">Carregando...</h1>
+                <p style="color: var(--text-muted); font-size: 14px;">Visão geral do seu negócio</p>
             </div>
-            <button class="btn-sair" onclick="sair()">Sair</button>
+            <div class="store-info">
+                <img id="imgLogoHeader" src="https://via.placeholder.com/45" alt="Logo">
+                <a id="btnVerLoja" href="#" target="_blank" class="btn-link">Ver Loja Online</a>
+            </div>
         </div>
 
-        <div class="status-card">
-            <h3 style="margin-bottom: 15px;">Status da Sua Distribuidora</h3>
-            <p><strong>Identificador (Slug):</strong> <span id="slugEmpresa">-</span></p>
-            <p><strong>WhatsApp Cadastrado:</strong> <span id="whatsappEmpresa">-</span></p>
-            <p><strong>Preço do Gás:</strong> R$ <span id="precoGas">-</span></p>
-            <p><strong>Preço da Água:</strong> R$ <span id="precoAgua">-</span></p>
-
-            <a id="linkLoja" href="#" target="_blank" class="btn-loja">Ver Minha Loja Online</a>
+        <!-- Métricas -->
+        <div class="metrics-grid">
+            <div class="card">
+                <h3>Vendas Estimadas (Mês)</h3>
+                <div class="value" id="metricaTotalR$">R$ 0,00</div>
+            </div>
+            <div class="card">
+                <h3>Pedidos Realizados</h3>
+                <div class="value" id="metricaPedidos">0</div>
+            </div>
+            <div class="card">
+                <h3>Preço Atual do Gás</h3>
+                <div class="value" id="cardPrecoGas">R$ --</div>
+            </div>
+            <div class="card">
+                <h3>Preço Atual da Água</h3>
+                <div class="value" id="cardPrecoAgua">R$ --</div>
+            </div>
         </div>
+
+        <!-- Gráfico -->
+        <div class="chart-container">
+            <h3 style="text-align: left; margin-bottom: 15px; color: var(--text-muted);">Desempenho de Vendas do Mês</h3>
+            <canvas id="graficoVendas"></canvas>
+        </div>
+
+        <!-- Formulários -->
+        <div class="form-grid">
+            
+            <!-- Formulário 1: Preços e Logo -->
+            <div class="card" id="configuracoes">
+                <h2 class="section-title">Editar Preços e Logo</h2>
+                <form id="formAtualizar">
+                    <div class="form-group">
+                        <label for="preco_gas">Preço do Gás (R$)</label>
+                        <input type="number" step="0.01" id="preco_gas" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="preco_agua">Preço da Água (R$)</label>
+                        <input type="number" step="0.01" id="preco_agua" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="logoFile">Nova Logo (Opcional)</label>
+                        <input type="file" id="logoFile" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn-submit">Salvar Alterações</button>
+                </form>
+            </div>
+
+            <!-- Formulário 2: Alterar Senha -->
+            <div class="card" id="seguranca">
+                <h2 class="section-title">Alterar Senha de Acesso</h2>
+                <form id="formSenha">
+                    <div class="form-group">
+                        <label for="senha_atual">Senha Atual</label>
+                        <input type="password" id="senha_atual" required placeholder="******">
+                    </div>
+                    <div class="form-group">
+                        <label for="nova_senha">Nova Senha</label>
+                        <input type="password" id="nova_senha" required placeholder="Digite a nova senha">
+                    </div>
+                    <button type="submit" class="btn-submit" style="background-color: #475569;">Atualizar Senha</button>
+                </form>
+            </div>
+
+        </div>
+
     </div>
 
     <script>
         const API_URL = "https://disk-gas-api.onrender.com";
         const token = localStorage.getItem('token_distribuidora');
 
-        // Se não tiver token salvo, força o redirecionamento para a tela do login
-        if (!token) {
-            window.location.href = 'login.html';
-        }
+        if (!token) { window.location.href = 'login.html'; }
 
         async function carregarDados() {
             try {
@@ -57,34 +247,133 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!response.ok) {
-                    sair();
-                    return;
-                }
+                if (!response.ok) throw new Error('Sessão expirada');
 
                 const data = await response.json();
 
-                document.getElementById('nomeEmpresa').textContent = data.nome;
-                document.getElementById('emailEmpresa').textContent = data.email || 'E-mail não informado';
-                document.getElementById('slugEmpresa').textContent = data.slug;
-                document.getElementById('whatsappEmpresa').textContent = data.whatsapp;
-                document.getElementById('precoGas').textContent = parseFloat(data.preco_gas).toFixed(2);
-                document.getElementById('precoAgua').textContent = parseFloat(data.preco_agua).toFixed(2);
+                document.getElementById('nomeLoja').textContent = data.nome;
+                document.getElementById('preco_gas').value = data.preco_gas;
+                document.getElementById('preco_agua').value = data.preco_agua;
+                document.getElementById('cardPrecoGas').textContent = `R$ ${parseFloat(data.preco_gas).toFixed(2)}`;
+                document.getElementById('cardPrecoAgua').textContent = `R$ ${parseFloat(data.preco_agua).toFixed(2)}`;
+                document.getElementById('btnVerLoja').href = `index.html?loja=${data.slug}`;
 
                 if (data.logo_url) {
-                    const img = document.getElementById('imgLogo');
-                    img.src = data.logo_url;
-                    img.style.display = 'block';
+                    document.getElementById('imgLogoHeader').src = data.logo_url;
                 }
 
-                document.getElementById('linkLoja').href = `index.html?loja=${data.slug}`;
+                gerarMetricasSimuladas(data.preco_gas);
 
             } catch (err) {
-                console.error("Erro ao carregar dados do painel:", err);
+                localStorage.removeItem('token_distribuidora');
+                window.location.href = 'login.html';
             }
         }
 
-        function sair() {
+        document.getElementById('formAtualizar').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const preco_gas = document.getElementById('preco_gas').value;
+            const preco_agua = document.getElementById('preco_agua').value;
+            const logoInput = document.getElementById('logoFile');
+            let logo_url = null;
+
+            if (logoInput.files.length > 0) {
+                logo_url = await comprimirImagem(logoInput.files[0], 400);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/dashboard/meus-dados`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ preco_gas, preco_agua, logo_url })
+                });
+
+                const resData = await response.json();
+                exibirMensagem(resData.message || resData.error, response.ok ? 'sucesso' : 'erro');
+                if (response.ok) carregarDados();
+            } catch (err) {
+                exibirMensagem('Erro ao atualizar dados.', 'erro');
+            }
+        });
+
+        document.getElementById('formSenha').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senha_atual = document.getElementById('senha_atual').value;
+            const nova_senha = document.getElementById('nova_senha').value;
+
+            try {
+                const response = await fetch(`${API_URL}/api/dashboard/alterar-senha`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ senha_atual, nova_senha })
+                });
+
+                const resData = await response.json();
+                exibirMensagem(resData.message || resData.error, response.ok ? 'sucesso' : 'erro');
+                if (response.ok) document.getElementById('formSenha').reset();
+            } catch (err) {
+                exibirMensagem('Erro ao alterar senha.', 'erro');
+            }
+        });
+
+        function gerarMetricasSimuladas(precoGas) {
+            const pedidos = 48;
+            const total = pedidos * parseFloat(precoGas);
+            document.getElementById('metricaPedidos').textContent = pedidos;
+            document.getElementById('metricaTotalR$').textContent = `R$ ${total.toFixed(2)}`;
+
+            const canvas = document.getElementById('graficoVendas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 600; canvas.height = 200;
+
+            const dias = ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'];
+            const valores = [10, 14, 8, 16];
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.beginPath(); ctx.strokeStyle = '#0066ff'; ctx.lineWidth = 3;
+
+            valores.forEach((val, i) => {
+                const x = (i * 150) + 50;
+                const y = 180 - (val * 8);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                ctx.fillStyle = '#004ecc'; ctx.fillRect(x - 4, y - 4, 8, 8);
+                ctx.fillStyle = '#666'; ctx.font = '12px Arial'; ctx.fillText(dias[i], x - 20, 195);
+            });
+            ctx.stroke();
+        }
+
+        function comprimirImagem(file, maxWidth = 400) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width, h = img.height;
+                        if (w > maxWidth) { h = Math.round((h * maxWidth) / w); w = maxWidth; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                };
+            });
+        }
+
+        function exibirMensagem(texto, tipo) {
+            const msg = document.getElementById('mensagem');
+            msg.className = tipo; msg.textContent = texto; msg.style.display = 'block';
+            setTimeout(() => msg.style.display = 'none', 4000);
+        }
+
+        function logout() {
             localStorage.removeItem('token_distribuidora');
             window.location.href = 'login.html';
         }
