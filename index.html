@@ -7,29 +7,36 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         body { background-color: #f4f6f9; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: #fff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .card { background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
         
-        .header-info { display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 15px; }
+        .header-info { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 10px; }
         .logo { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; }
-        h1 { font-size: 22px; color: #333; margin: 0; }
+        h1 { font-size: 20px; color: #333; margin: 0; }
         
-        .status-badge { display: inline-block; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 15px; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; color: white; margin-bottom: 12px; text-align: center; }
         .aberto { background-color: #28a745; }
         .fechado { background-color: #dc3545; }
 
-        /* Banner de Aviso Personalizado */
-        .aviso-box { background-color: #e7f5ff; color: #0056b3; border: 1px solid #bbeeef; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-bottom: 20px; display: none; }
+        .aviso-box { background-color: #e7f5ff; color: #0056b3; border: 1px solid #bbeeef; padding: 10px; border-radius: 8px; font-size: 13px; font-weight: bold; margin-bottom: 15px; text-align: center; display: none; }
 
-        .produto { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .produto-info { text-align: left; }
-        .produto-nome { font-weight: bold; color: #333; }
-        .produto-preco { color: #28a745; font-size: 18px; font-weight: bold; margin-top: 5px; }
+        .produto-box { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .produto-nome { font-weight: bold; color: #333; font-size: 14px; }
+        .produto-preco { color: #28a745; font-size: 16px; font-weight: bold; }
         
-        .btn-whatsapp { background-color: #25d366; color: white; border: none; padding: 10px 15px; border-radius: 5px; font-weight: bold; text-decoration: none; display: inline-block; font-size: 14px; }
-        .btn-whatsapp:hover { background-color: #1ebc57; }
-        .btn-desativado { background-color: #6c757d; cursor: not-allowed; pointer-events: none; }
+        .qtd-selector { display: flex; align-items: center; gap: 8px; }
+        .qtd-btn { width: 28px; height: 28px; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        .qtd-val { font-weight: bold; width: 20px; text-align: center; }
 
-        #erro { color: #dc3545; font-weight: bold; display: none; }
+        .form-group { margin-bottom: 12px; text-align: left; }
+        label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
+        textarea { resize: vertical; height: 60px; }
+
+        .btn-enviar { width: 100%; background-color: #25d366; color: white; border: none; padding: 14px; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-enviar:hover { background-color: #1ebc57; }
+        .btn-desativado { background-color: #6c757d; cursor: not-allowed; }
+
+        #erro { color: #dc3545; font-weight: bold; display: none; text-align: center; }
     </style>
 </head>
 <body>
@@ -41,26 +48,66 @@
                 <h1 id="nomeLoja">Carregando...</h1>
             </div>
 
-            <div id="statusBadge" class="status-badge aberto">Carregando...</div>
+            <div style="text-align: center;">
+                <div id="statusBadge" class="status-badge aberto">Carregando...</div>
+            </div>
 
-            <!-- Aviso da Distribuidora (Ex: Aberto das 7h as 18h) -->
             <div id="avisoLoja" class="aviso-box"></div>
 
-            <div class="produto">
-                <div class="produto-info">
-                    <div class="produto-nome">Botijão de Gás 13kg</div>
+            <!-- Seleção de Produtos -->
+            <div class="produto-box">
+                <div>
+                    <div class="produto-nome">🔥 Botijão de Gás 13kg</div>
                     <div id="precoGas" class="produto-preco">R$ --,--</div>
                 </div>
-                <a id="btnGas" href="#" target="_blank" class="btn-whatsapp">Pedir Gás</a>
+                <div class="qtd-selector">
+                    <button class="qtd-btn" onclick="alterarQtd('gas', -1)">-</button>
+                    <span id="qtdGas" class="qtd-val">0</span>
+                    <button class="qtd-btn" onclick="alterarQtd('gas', 1)">+</button>
+                </div>
             </div>
 
-            <div class="produto">
-                <div class="produto-info">
-                    <div class="produto-nome">Galão de Água 20L</div>
+            <div class="produto-box">
+                <div>
+                    <div class="produto-nome">💧 Galão de Água 20L</div>
                     <div id="precoAgua" class="produto-preco">R$ --,--</div>
                 </div>
-                <a id="btnAgua" href="#" target="_blank" class="btn-whatsapp">Pedir Água</a>
+                <div class="qtd-selector">
+                    <button class="qtd-btn" onclick="alterarQtd('agua', -1)">-</button>
+                    <span id="qtdAgua" class="qtd-val">0</span>
+                    <button class="qtd-btn" onclick="alterarQtd('agua', 1)">+</button>
+                </div>
             </div>
+
+            <!-- Formulário de Entrega do Cliente -->
+            <form id="formPedido" onsubmit="enviarPedido(event)">
+                <div class="form-group">
+                    <label>Seu Nome</label>
+                    <input type="text" id="clienteNome" required placeholder="Digite seu nome completo">
+                </div>
+
+                <div class="form-group">
+                    <label>Endereço de Entrega</label>
+                    <input type="text" id="clienteEndereco" required placeholder="Rua, Número e Bairro">
+                </div>
+
+                <div class="form-group">
+                    <label>Forma de Pagamento</label>
+                    <select id="formaPagamento" required>
+                        <option value="">Selecione...</option>
+                        <option value="Pix">Pix</option>
+                        <option value="Cartão de Crédito/Débito">Cartão de Crédito / Débito</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Observação / Troco</label>
+                    <textarea id="clienteObs" placeholder="Ex: Precisa de troco para R$ 100,00 ou ponto de referência"></textarea>
+                </div>
+
+                <button type="submit" id="btnEnviar" class="btn-enviar">Pedir pelo WhatsApp</button>
+            </form>
         </div>
 
         <div id="erro">Distribuidora não encontrada.</div>
@@ -71,56 +118,100 @@
         const urlParams = new URLSearchParams(window.location.search);
         const lojaSlug = urlParams.get('loja') || 'padrao';
 
+        let dadosLoja = null;
+        let qtds = { gas: 0, agua: 0 };
+
+        function alterarQtd(tipo, val) {
+            if (qtds[tipo] + val >= 0) {
+                qtds[tipo] += val;
+                document.getElementById(tipo === 'gas' ? 'qtdGas' : 'qtdAgua').textContent = qtds[tipo];
+            }
+        }
+
         async function carregarLoja() {
             try {
                 const response = await fetch(`${API_URL}/api/${lojaSlug}/precos`);
                 if (!response.ok) throw new Error("Erro ao carregar dados");
 
-                const data = await response.json();
+                dadosLoja = await response.json();
 
-                document.getElementById('nomeLoja').textContent = data.nome;
-                document.getElementById('precoGas').textContent = `R$ ${data.preco_gas.toFixed(2)}`;
-                document.getElementById('precoAgua').textContent = `R$ ${data.preco_agua.toFixed(2)}`;
+                document.getElementById('nomeLoja').textContent = dadosLoja.nome;
+                document.getElementById('precoGas').textContent = `R$ ${dadosLoja.preco_gas.toFixed(2)}`;
+                document.getElementById('precoAgua').textContent = `R$ ${dadosLoja.preco_agua.toFixed(2)}`;
 
-                if (data.logo_url) {
-                    document.getElementById('imgLogo').src = data.logo_url;
+                if (dadosLoja.logo_url) {
+                    document.getElementById('imgLogo').src = dadosLoja.logo_url;
                 }
 
-                // Aviso Personalizado
                 const avisoBox = document.getElementById('avisoLoja');
-                if (data.aviso_loja && data.aviso_loja.trim() !== '') {
-                    avisoBox.textContent = `📢 ${data.aviso_loja}`;
+                if (dadosLoja.aviso_loja && dadosLoja.aviso_loja.trim() !== '') {
+                    avisoBox.textContent = `📢 ${dadosLoja.aviso_loja}`;
                     avisoBox.style.display = 'block';
                 }
 
-                // Status de Aberto / Fechado
                 const badge = document.getElementById('statusBadge');
-                const btnGas = document.getElementById('btnGas');
-                const btnAgua = document.getElementById('btnAgua');
+                const btn = document.getElementById('btnEnviar');
 
-                if (data.status_loja) {
+                if (dadosLoja.status_loja) {
                     badge.textContent = "ABERTO";
                     badge.className = "status-badge aberto";
-
-                    const msgGas = encodeURIComponent(`Olá! Gostaria de pedir um Botijão de Gás (R$ ${data.preco_gas.toFixed(2)})`);
-                    const msgAgua = encodeURIComponent(`Olá! Gostaria de pedir um Galão de Água (R$ ${data.preco_agua.toFixed(2)})`);
-
-                    btnGas.href = `https://wa.me/${data.whatsapp}?text=${msgGas}`;
-                    btnAgua.href = `https://wa.me/${data.whatsapp}?text=${msgAgua}`;
                 } else {
                     badge.textContent = "FECHADO";
                     badge.className = "status-badge fechado";
-
-                    btnGas.textContent = "Fechado";
-                    btnGas.classList.add('btn-desativado');
-                    btnAgua.textContent = "Fechado";
-                    btnAgua.classList.add('btn-desativado');
+                    btn.textContent = "Loja Fechada no Momento";
+                    btn.classList.add('btn-desativado');
+                    btn.disabled = true;
                 }
 
             } catch (err) {
                 document.getElementById('conteudo-loja').style.display = 'none';
                 document.getElementById('erro').style.display = 'block';
             }
+        }
+
+        function enviarPedido(e) {
+            e.preventDefault();
+
+            if (!dadosLoja || !dadosLoja.status_loja) return;
+
+            if (qtds.gas === 0 && qtds.agua === 0) {
+                alert("Por favor, adicione pelo menos 1 item (Gás ou Água) ao seu pedido.");
+                return;
+            }
+
+            const nome = document.getElementById('clienteNome').value.trim();
+            const endereco = document.getElementById('clienteEndereco').value.trim();
+            const pagamento = document.getElementById('formaPagamento').value;
+            const obs = document.getElementById('clienteObs').value.trim();
+
+            let itens = [];
+            let total = 0;
+
+            if (qtds.gas > 0) {
+                const subTotalGas = qtds.gas * dadosLoja.preco_gas;
+                itens.push(`• *${qtds.gas}x* Botijão de Gás (R$ ${subTotalGas.toFixed(2)})`);
+                total += subTotalGas;
+            }
+
+            if (qtds.agua > 0) {
+                const subTotalAgua = qtds.agua * dadosLoja.preco_agua;
+                itens.push(`• *${qtds.agua}x* Galão de Água (R$ ${subTotalAgua.toFixed(2)})`);
+                total += subTotalAgua;
+            }
+
+            let msg = `🛒 *NOVO PEDIDO - ${dadosLoja.nome.toUpperCase()}*\n\n`;
+            msg += `*Itens do Pedido:*\n${itens.join('\n')}\n\n`;
+            msg += `💰 *Valor Total:* R$ ${total.toFixed(2)}\n\n`;
+            msg += `👤 *Cliente:* ${nome}\n`;
+            msg += `📍 *Endereço:* ${endereco}\n`;
+            msg += `💳 *Pagamento:* ${pagamento}\n`;
+
+            if (obs !== '') {
+                msg += `📝 *Obs:* ${obs}\n`;
+            }
+
+            const urlWhatsapp = `https://wa.me/${dadosLoja.whatsapp}?text=${encodeURIComponent(msg)}`;
+            window.open(urlWhatsapp, '_blank');
         }
 
         carregarLoja();
