@@ -36,7 +36,6 @@ async function inicializarBanco() {
             );
         `);
 
-
         await pool.query(`
             ALTER TABLE distribuidoras
             ADD COLUMN IF NOT EXISTS email VARCHAR(150) UNIQUE,
@@ -249,6 +248,58 @@ app.post('/api/:slug/admin/precos', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Rota para o cliente atualizar seus próprios dados (Preços e Logo)
+app.put('/api/dashboard/meus-dados', autenticarToken, async (req, res) => {
+    const { preco_gas, preco_agua, logo_url } = req.body;
+
+    try {
+        const precoGas = parseFloat(preco_gas);
+        const precoAgua = parseFloat(preco_agua);
+
+        if (isNaN(precoGas) || isNaN(precoAgua)) {
+            return res.status(400).json({ error: "Forneça valores válidos para os preços." });
+        }
+
+        await pool.query(
+            'UPDATE distribuidoras SET preco_gas = $1, preco_agua = $2, logo_url = COALESCE($3, logo_url) WHERE slug = $4',
+            [precoGas, precoAgua, logo_url || null, req.empresaSlug]
+        );
+
+        res.json({ message: "Dados atualizados com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Rota para alterar a senha de acesso ao painel
+app.put('/api/dashboard/alterar-senha', autenticarToken, async (req, res) => {
+    const { senha_atual, nova_senha } = req.body;
+
+    if (!senha_atual || !nova_senha) {
+        return res.status(400).json({ error: "Informe a senha atual e a nova senha." });
+    }
+
+    try {
+        const result = await pool.query('SELECT senha_hash FROM distribuidoras WHERE slug = $1', [req.empresaSlug]);
+        const empresa = result.rows[0];
+
+        const senhaValida = await bcrypt.compare(senha_atual, empresa.senha_hash);
+        if (!senhaValida) {
+            return res.status(401).json({ error: "Senha atual incorreta." });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const nova_senha_hash = await bcrypt.hash(nova_senha, salt);
+
+        await pool.query('UPDATE distribuidoras SET senha_hash = $1 WHERE slug = $2', [nova_senha_hash, req.empresaSlug]);
+
+        res.json({ message: "Senha alterada com sucesso!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
