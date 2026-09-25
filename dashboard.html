@@ -97,6 +97,17 @@
             font-size: 14px;
         }
 
+        .checkbox-group { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        .checkbox-group input { width: auto; cursor: pointer; }
+
+        .product-section {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
         .btn-submit {
             background-color: var(--primary);
             color: white;
@@ -193,14 +204,39 @@
                         <input type="text" id="whatsapp" required placeholder="Ex: 5514999999999">
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                        <div class="form-group">
-                            <label for="preco_gas">Preço do gás (R$)</label>
-                            <input type="number" step="0.01" id="preco_gas" required>
+                    <!-- Configuração do Gás -->
+                    <div class="product-section">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="vende_gas">
+                            <label for="vende_gas">Vender gás nesta loja</label>
                         </div>
-                        <div class="form-group">
-                            <label for="preco_agua">Preço da água (R$)</label>
-                            <input type="number" step="0.01" id="preco_agua" required>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="nome_gas">Nome/marca do gás</label>
+                                <input type="text" id="nome_gas" placeholder="Ex: Botijão Ultragaz 13kg">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label for="preco_gas">Preço (R$)</label>
+                                <input type="number" step="0.01" id="preco_gas">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuração da Água -->
+                    <div class="product-section">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="vende_agua">
+                            <label for="vende_agua">Vender água nesta loja</label>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                            <div class="form-group" style="margin: 0;">
+                                <label for="nome_agua">Nome/marca da água</label>
+                                <input type="text" id="nome_agua" placeholder="Ex: Galão Lindoya 20L">
+                            </div>
+                            <div class="form-group" style="margin: 0;">
+                                <label for="preco_agua">Preço (R$)</label>
+                                <input type="number" step="0.01" id="preco_agua">
+                            </div>
                         </div>
                     </div>
 
@@ -256,8 +292,15 @@
 
                 document.getElementById('nomeLoja').textContent = data.nome;
                 document.getElementById('whatsapp').value = data.whatsapp || '';
+                
+                document.getElementById('vende_gas').checked = data.vende_gas !== false;
+                document.getElementById('nome_gas').value = data.nome_gas || 'Botijão de gás 13kg';
                 document.getElementById('preco_gas').value = data.preco_gas;
+
+                document.getElementById('vende_agua').checked = data.vende_agua !== false;
+                document.getElementById('nome_agua').value = data.nome_agua || 'Galão de água 20L';
                 document.getElementById('preco_agua').value = data.preco_agua;
+
                 document.getElementById('aviso_loja').value = data.aviso_loja || '';
                 document.getElementById('status_loja').value = data.status_loja !== false ? "true" : "false";
                 document.getElementById('horario_abertura').value = data.horario_abertura || '07:00';
@@ -286,7 +329,11 @@
         document.getElementById('formAtualizar').addEventListener('submit', async (e) => {
             e.preventDefault();
             const whatsapp = document.getElementById('whatsapp').value;
+            const vende_gas = document.getElementById('vende_gas').checked;
+            const nome_gas = document.getElementById('nome_gas').value;
             const preco_gas = document.getElementById('preco_gas').value;
+            const vende_agua = document.getElementById('vende_agua').checked;
+            const nome_agua = document.getElementById('nome_agua').value;
             const preco_agua = document.getElementById('preco_agua').value;
             const status_loja = document.getElementById('status_loja').value === "true";
             const aviso_loja = document.getElementById('aviso_loja').value;
@@ -308,7 +355,11 @@
                     },
                     body: JSON.stringify({ 
                         whatsapp, 
+                        vende_gas,
+                        nome_gas,
                         preco_gas, 
+                        vende_agua,
+                        nome_agua,
                         preco_agua, 
                         status_loja, 
                         aviso_loja, 

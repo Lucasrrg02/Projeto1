@@ -59,10 +59,10 @@
 
             <div id="avisoLoja" class="aviso-box"></div>
 
-            <!-- Seleção de produtos -->
-            <div class="produto-box">
+            <!-- Produto Gás -->
+            <div id="boxGas" class="produto-box" style="display: none;">
                 <div>
-                    <div class="produto-nome">🔥 Botijão de gás 13kg</div>
+                    <div id="nomeGas" class="produto-nome">🔥 Botijão de gás 13kg</div>
                     <div id="precoGas" class="produto-preco">R$ --,--</div>
                 </div>
                 <div class="qtd-selector">
@@ -72,9 +72,10 @@
                 </div>
             </div>
 
-            <div class="produto-box">
+            <!-- Produto Água -->
+            <div id="boxAgua" class="produto-box" style="display: none;">
                 <div>
-                    <div class="produto-nome">💧 Galão de água 20L</div>
+                    <div id="nomeAgua" class="produto-nome">💧 Galão de água 20L</div>
                     <div id="precoAgua" class="produto-preco">R$ --,--</div>
                 </div>
                 <div class="qtd-selector">
@@ -135,7 +136,9 @@
 
         function atualizarTotal() {
             if (!dadosLoja) return;
-            const total = (qtds.gas * dadosLoja.preco_gas) + (qtds.agua * dadosLoja.preco_agua);
+            const totalGas = dadosLoja.vende_gas ? (qtds.gas * dadosLoja.preco_gas) : 0;
+            const totalAgua = dadosLoja.vende_agua ? (qtds.agua * dadosLoja.preco_agua) : 0;
+            const total = totalGas + totalAgua;
             document.getElementById('valorTotal').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
         }
 
@@ -171,11 +174,27 @@
                 dadosLoja = await response.json();
 
                 document.getElementById('nomeLoja').textContent = dadosLoja.nome;
-                document.getElementById('precoGas').textContent = `R$ ${dadosLoja.preco_gas.toFixed(2)}`;
-                document.getElementById('precoAgua').textContent = `R$ ${dadosLoja.preco_agua.toFixed(2)}`;
 
                 if (dadosLoja.logo_url) {
                     document.getElementById('imgLogo').src = dadosLoja.logo_url;
+                }
+
+                // Exibe ou esconde o card do Gás
+                if (dadosLoja.vende_gas !== false) {
+                    document.getElementById('boxGas').style.display = 'flex';
+                    document.getElementById('nomeGas').textContent = `🔥 ${dadosLoja.nome_gas || 'Botijão de gás 13kg'}`;
+                    document.getElementById('precoGas').textContent = `R$ ${dadosLoja.preco_gas.toFixed(2).replace('.', ',')}`;
+                } else {
+                    document.getElementById('boxGas').style.display = 'none';
+                }
+
+                // Exibe ou esconde o card da Água
+                if (dadosLoja.vende_agua !== false) {
+                    document.getElementById('boxAgua').style.display = 'flex';
+                    document.getElementById('nomeAgua').textContent = `💧 ${dadosLoja.nome_agua || 'Galão de água 20L'}`;
+                    document.getElementById('precoAgua').textContent = `R$ ${dadosLoja.preco_agua.toFixed(2).replace('.', ',')}`;
+                } else {
+                    document.getElementById('boxAgua').style.display = 'none';
                 }
 
                 const avisoBox = document.getElementById('avisoLoja');
@@ -218,7 +237,7 @@
             if (!lojaAbertaAgora) return;
 
             if (qtds.gas === 0 && qtds.agua === 0) {
-                alert("Por favor, adicione pelo menos 1 item (gás ou água) ao seu pedido.");
+                alert("Por favor, adicione pelo menos 1 item ao seu pedido.");
                 return;
             }
 
@@ -230,15 +249,17 @@
             let itens = [];
             let total = 0;
 
-            if (qtds.gas > 0) {
+            if (dadosLoja.vende_gas && qtds.gas > 0) {
                 const subTotalGas = qtds.gas * dadosLoja.preco_gas;
-                itens.push(`• *${qtds.gas}x* Botijão de gás (R$ ${subTotalGas.toFixed(2)})`);
+                const nomeGasExibicao = dadosLoja.nome_gas || 'Botijão de gás 13kg';
+                itens.push(`• *${qtds.gas}x* ${nomeGasExibicao} (R$ ${subTotalGas.toFixed(2)})`);
                 total += subTotalGas;
             }
 
-            if (qtds.agua > 0) {
+            if (dadosLoja.vende_agua && qtds.agua > 0) {
                 const subTotalAgua = qtds.agua * dadosLoja.preco_agua;
-                itens.push(`• *${qtds.agua}x* Galão de água (R$ ${subTotalAgua.toFixed(2)})`);
+                const nomeAguaExibicao = dadosLoja.nome_agua || 'Galão de água 20L';
+                itens.push(`• *${qtds.agua}x* ${nomeAguaExibicao} (R$ ${subTotalAgua.toFixed(2)})`);
                 total += subTotalAgua;
             }
 
