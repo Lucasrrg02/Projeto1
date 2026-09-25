@@ -27,6 +27,11 @@
         .qtd-btn { width: 28px; height: 28px; border: 1px solid #ccc; background: #fff; border-radius: 4px; font-weight: bold; cursor: pointer; }
         .qtd-val { font-weight: bold; width: 20px; text-align: center; }
 
+        /* Caixa do Valor Total */
+        .total-box { background: #eef2ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .total-label { font-weight: bold; color: #3730a3; font-size: 15px; }
+        .total-valor { color: #16a34a; font-size: 18px; font-weight: bold; }
+
         .form-group { margin-bottom: 12px; text-align: left; }
         label { display: block; font-size: 13px; font-weight: bold; color: #555; margin-bottom: 4px; }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
@@ -54,10 +59,10 @@
 
             <div id="avisoLoja" class="aviso-box"></div>
 
-            <!-- Seleção de Produtos -->
+            <!-- Seleção de produtos -->
             <div class="produto-box">
                 <div>
-                    <div class="produto-nome">🔥 Botijão de Gás 13kg</div>
+                    <div class="produto-nome">🔥 Botijão de gás 13kg</div>
                     <div id="precoGas" class="produto-preco">R$ --,--</div>
                 </div>
                 <div class="qtd-selector">
@@ -69,7 +74,7 @@
 
             <div class="produto-box">
                 <div>
-                    <div class="produto-nome">💧 Galão de Água 20L</div>
+                    <div class="produto-nome">💧 Galão de água 20L</div>
                     <div id="precoAgua" class="produto-preco">R$ --,--</div>
                 </div>
                 <div class="qtd-selector">
@@ -79,30 +84,36 @@
                 </div>
             </div>
 
-            <!-- Formulário de Entrega do Cliente -->
+            <!-- Total calculado dinamicamente -->
+            <div class="total-box">
+                <div class="total-label">Total do pedido</div>
+                <div id="valorTotal" class="total-valor">R$ 0,00</div>
+            </div>
+
+            <!-- Formulário de entrega do cliente -->
             <form id="formPedido" onsubmit="enviarPedido(event)">
                 <div class="form-group">
-                    <label>Seu Nome</label>
+                    <label>Seu nome</label>
                     <input type="text" id="clienteNome" required placeholder="Digite seu nome completo">
                 </div>
 
                 <div class="form-group">
-                    <label>Endereço de Entrega</label>
-                    <input type="text" id="clienteEndereco" required placeholder="Rua, Número e Bairro">
+                    <label>Endereço de entrega</label>
+                    <input type="text" id="clienteEndereco" required placeholder="Rua, número e bairro">
                 </div>
 
                 <div class="form-group">
-                    <label>Forma de Pagamento</label>
+                    <label>Forma de pagamento</label>
                     <select id="formaPagamento" required>
                         <option value="">Selecione...</option>
                         <option value="Pix">Pix</option>
-                        <option value="Cartão de Crédito/Débito">Cartão de Crédito / Débito</option>
+                        <option value="Cartão de crédito/débito">Cartão de crédito / débito</option>
                         <option value="Dinheiro">Dinheiro</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label>Observação / Troco</label>
+                    <label>Observação / troco</label>
                     <textarea id="clienteObs" placeholder="Ex: Precisa de troco para R$ 100,00 ou ponto de referência"></textarea>
                 </div>
 
@@ -122,14 +133,20 @@
         let qtds = { gas: 0, agua: 0 };
         let lojaAbertaAgora = false;
 
+        function atualizarTotal() {
+            if (!dadosLoja) return;
+            const total = (qtds.gas * dadosLoja.preco_gas) + (qtds.agua * dadosLoja.preco_agua);
+            document.getElementById('valorTotal').textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        }
+
         function alterarQtd(tipo, val) {
             if (qtds[tipo] + val >= 0) {
                 qtds[tipo] += val;
                 document.getElementById(tipo === 'gas' ? 'qtdGas' : 'qtdAgua').textContent = qtds[tipo];
+                atualizarTotal();
             }
         }
 
-        // Função para validar se o relógio atual está dentro do horário de abertura/fechamento
         function verificarHorarioFuncionamento(abertura, fechamento) {
             const agora = new Date();
             const [hAbre, mAbre] = abertura.split(':').map(Number);
@@ -176,16 +193,18 @@
 
                 if (dadosLoja.status_loja && dentroDoHorario) {
                     lojaAbertaAgora = true;
-                    badge.textContent = "ABERTO";
+                    badge.textContent = "Aberto";
                     badge.className = "status-badge aberto";
                 } else {
                     lojaAbertaAgora = false;
-                    badge.textContent = "FECHADO";
+                    badge.textContent = "Fechado";
                     badge.className = "status-badge fechado";
-                    btn.textContent = `Loja Fechada (${hAbre} às ${hFecha})`;
+                    btn.textContent = `Loja fechada (${hAbre} às ${hFecha})`;
                     btn.classList.add('btn-desativado');
                     btn.disabled = true;
                 }
+
+                atualizarTotal();
 
             } catch (err) {
                 document.getElementById('conteudo-loja').style.display = 'none';
@@ -199,7 +218,7 @@
             if (!lojaAbertaAgora) return;
 
             if (qtds.gas === 0 && qtds.agua === 0) {
-                alert("Por favor, adicione pelo menos 1 item (Gás ou Água) ao seu pedido.");
+                alert("Por favor, adicione pelo menos 1 item (gás ou água) ao seu pedido.");
                 return;
             }
 
@@ -213,19 +232,19 @@
 
             if (qtds.gas > 0) {
                 const subTotalGas = qtds.gas * dadosLoja.preco_gas;
-                itens.push(`• *${qtds.gas}x* Botijão de Gás (R$ ${subTotalGas.toFixed(2)})`);
+                itens.push(`• *${qtds.gas}x* Botijão de gás (R$ ${subTotalGas.toFixed(2)})`);
                 total += subTotalGas;
             }
 
             if (qtds.agua > 0) {
                 const subTotalAgua = qtds.agua * dadosLoja.preco_agua;
-                itens.push(`• *${qtds.agua}x* Galão de Água (R$ ${subTotalAgua.toFixed(2)})`);
+                itens.push(`• *${qtds.agua}x* Galão de água (R$ ${subTotalAgua.toFixed(2)})`);
                 total += subTotalAgua;
             }
 
-            let msg = `🛒 *NOVO PEDIDO - ${dadosLoja.nome.toUpperCase()}*\n\n`;
-            msg += `*Itens do Pedido:*\n${itens.join('\n')}\n\n`;
-            msg += `💰 *Valor Total:* R$ ${total.toFixed(2)}\n\n`;
+            let msg = `🛒 *Novo pedido - ${dadosLoja.nome}*\n\n`;
+            msg += `*Itens do pedido:*\n${itens.join('\n')}\n\n`;
+            msg += `💰 *Valor total:* R$ ${total.toFixed(2)}\n\n`;
             msg += `👤 *Cliente:* ${nome}\n`;
             msg += `📍 *Endereço:* ${endereco}\n`;
             msg += `💳 *Pagamento:* ${pagamento}\n`;
