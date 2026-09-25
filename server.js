@@ -13,6 +13,9 @@ app.use(express.urlencoded({ limit: '10mb', extended: true}));
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true}));
+
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -35,6 +38,7 @@ async function inicializarBanco() {
                 logo_url TEXT
             );
         `);
+
 
         await pool.query(`
             ALTER TABLE distribuidoras
