@@ -3,124 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Disk Gás & Água - Pedido Rapido</title>
+    <title>Disk Gás e Água</title>
+    <style>
+        :root {
+            --primary: #0066ff;
+            --bg: #f4f6f9;
+            --card-bg: #ffffff;
+            --text: #333;
+            --danger: #dc2626;
+            --success: #16a34a;
+        }
 
-    <!-- Link Bonito -->
-         
-    <meta property="og:title" content="Disk Gás & Água - Faça seu pedido online!">
-    <meta property="og:description" content="Entregas rápidas de botijão de gás e galão de água. Peça direto pelo WhatsApp!">
-    <meta property="og:type" content="website">
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
 
+        .container { width: 100%; max-width: 500px; text-align: center; }
 
-    <!-- Icone -->
-    <link rel="shortcut icon" href="#">
-    <link rel="icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+        .header { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .logo { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 10px; border: 3px solid var(--primary); }
+        .store-name { font-size: 22px; font-weight: bold; margin-bottom: 5px; }
 
+        /* Banner de Aviso / Horário */
+        .banner-aviso {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            border: 1px solid #bae6fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            display: none;
+        }
 
-    <link rel="stylesheet" href="style.css">
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            margin-top: 5px;
+        }
+        .bg-aberto { background-color: var(--success); }
+        .bg-fechado { background-color: var(--danger); }
+
+        /* Products Grid */
+        .products { display: flex; flex-direction: column; gap: 15px; margin-bottom: 25px; }
+        .product-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .product-info { text-align: left; }
+        .product-title { font-weight: bold; font-size: 16px; }
+        .product-price { color: var(--primary); font-size: 18px; font-weight: bold; margin-top: 4px; }
+
+        .btn-pedir {
+            background-color: #25d366;
+            color: white;
+            text-decoration: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        #mensagem-erro { color: var(--danger); font-weight: bold; margin-top: 20px; display: none; }
+    </style>
 </head>
 <body>
 
-    <div id="toast-notification" class="toast hidden">Produto adicionado! </div>
-
     <div class="container">
-    <header>
-        <div style="display: flex; align-items: center; justify-content: center; gap: 12px;">
-            <!-- Imagem da Logo -->
-            <img id="imgLogo" src="" alt="Logo" style="max-height: 48px; display: none; border-radius: 6px; object-fit: contain;">
-            <h1 id="nomeLoja">Disk Gás e Água</h1>
+        
+        <div class="header">
+            <img id="imgLogo" src="https://via.placeholder.com/80" alt="Logo" class="logo">
+            <div id="nomeLoja" class="store-name">Carregando...</div>
+            <div id="badgeStatus" class="status-badge bg-aberto">Aberto</div>
+            
+            <!-- Banner de Aviso/Informação da Loja -->
+            <div id="bannerAviso" class="banner-aviso"></div>
         </div>
-        <p>Faça seu pedido online sem complicação!</p>
-    </header>
 
-    <main>
-        <!-- Produtos -->
-         <section class="produtos">
-            <div class="card-produto">
-                <h2> Botijão de Gás (13kg)</h2>
-                <p class="preco">R$ <span id="precoGas">135.00</span></p>
-                <div class="quantidade">
-                    <button type="button" class="btn-qtd" onclick="alterarQtd('gas', -1)" aria-label="Diminuir quantidade">-</button>
-                    <!-- Adicionamos inputmode e pattern para forçar teclado numerico -->
-                    <span id="qtdGas" class="qtd-display" inputmode="numeric" pattern="[0-9]*">0</span>
-                    <button type="button" class="btn-qtd" onclick="alterarQtd('gas', 1)" aria-label="Aumentar quantidade">+</button>
+        <div class="products">
+            <div class="product-card">
+                <div class="product-info">
+                    <div class="product-title">🔥 Botijão de Gás (13kg)</div>
+                    <div id="precoGas" class="product-price">R$ --,--</div>
+                </div>
+                <a id="btnPedirGas" href="#" target="_blank" class="btn-pedir">Pedir Gás</a>
+            </div>
+
+            <div class="product-card">
+                <div class="product-info">
+                    <div class="product-title">💧 Galão de Água (20L)</div>
+                    <div id="precoAgua" class="product-price">R$ --,--</div>
+                </div>
+                <a id="btnPedirAgua" href="#" target="_blank" class="btn-pedir">Pedir Água</a>
             </div>
         </div>
 
-        <div class="card-produto">
-            <h2> Galão de Água (20L)</h2>
-            <p class="preco">R$ <span id="precoAgua">20.00</span></p>
-            <div class="quantidade">
-                <button type="button" class="btn-qtd" onclick="alterarQtd('agua', -1)" aria-label="Diminuir quantidade">-</button>
-                <!-- Adicionamos inputmode pra forçar teclado numerico -->
-                <span id="qtdAgua" class="qtd-display" inputmode="numeric" pattern="[0-9]*">0</span>
-                <button type="button" class="btn-qtd" onclick="alterarQtd('agua', 1)" aria-label="Aumentar quantidade">+</button>
-            </div>
-        </div>
-    </section>
+        <div id="mensagem-erro">Distribuidora não encontrada.</div>
 
-
-    <!-- Formulário de Entrega -->
-    <section class="form-entrega">
-        <h2>Dados para Entrega</h2>
-
-        <label for="nome">Seu Nome *:</label>
-        <input type="text" id="nome" placeholder="Ex: João Silva" required>
-
-        <label for="endereco">Endereço completo e Nº *:</label>
-        <input type="text" id="endereco" placeholder="Ex: Rua das Flores, 123 - Bairro Centro" required>
-
-        <label for="pagamento">Forma de Pagamento:</label>
-        <select id="pagamento">
-            <option value="Pix">Pix</option>
-            <option value="Cartao de Débito">Cartão de Débito</option>
-            <option value="Cartão de Crédito">Cartão de Crédito</option>
-            <option value="Dinheiro">Dinheiro</option>
-        </select>
-
-        <label for="observacao">Observações (ex: Troco para R$ 200):</label>
-        <input type="text" id="observacao" placeholder="Opcional">
-    </section>
-
-    <!-- Resumo do Pedido -->
-     <footer class="resumo">
-        <div class="total-box">
-            <span>Total:</span>
-            <strong>R$ <span id="totalPedido">0.00</span></strong>
-        </div>
-        <button id="btnEnviar" onclick="enviarPedido()"> Confirmar e Enviar no WhatsApp</button>
-    </footer>
-</main>
-
-<!-- 1. Botao para abrir a area do admin -->
-    <footer style="text-align: center; margin-top: 30px; margin-bottom: 20px;">
-        <button onclick="abrirModalAdmin()" style="background: none; border: none; color: #888; cursor: pointer; font-size: 12px; text-decoration: underline;">
-            Área do Administrador
-        </button>
-    </footer>
-
-</div>
-
-<!-- O bloco inteiro do modal admin -->
- <div id="modalAdmin" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 1000;">
-    <div style="background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 320px; text-align: center;">
-        <h3 style="margin-top: 0; color: #333;">Atualizar Preços</h3>
-
-
-    <input type="password" id="senhaAdmin" placeholder="Senha do Admin" style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;">
-    <input type="number" step="0.01" id="novoPrecoGas" placeholder="Preço do Gás (R$)" style="width: 100%; padding: 10px; margin-bottom: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;">
-    <input type="number" step="0.01" id="novoPrecoAgua" placeholder="Preço da Água (R$)" style="width: 100%; padding: 10px; margin-bottom: 15px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px;">
-
-    <div style="display: flex; gap: 10px;">
-        <button onclick="salvarNovosPrecos()" style="flex: 1; padding: 10px; background: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Salvar</button>
-        <button onclick="fecharModalAdmin()" style="flex: 1; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold;">Cancelar</button>
     </div>
-</div>
-</div>
 
+    <script>
+        const API_URL = "https://disk-gas-api.onrender.com";
+        const urlParams = new URLSearchParams(window.location.search);
+        const lojaSlug = urlParams.get('loja') || 'padrao';
 
+        async function carregarLoja() {
+            try {
+                const response = await fetch(`${API_URL}/api/${lojaSlug}/precos`);
+                if (!response.ok) throw new Error("Loja não encontrada");
 
-<script src="app.js"></script>
+                const data = await response.json();
 
+                document.getElementById('nomeLoja').textContent = data.nome;
+                document.getElementById('precoGas').textContent = `R$ ${data.preco_gas.toFixed(2)}`;
+                document.getElementById('precoAgua').textContent = `R$ ${data.preco_agua.toFixed(2)}`;
+
+                if (data.logo_url) {
+                    document.getElementById('imgLogo').src = data.logo_url;
+                }
+
+                // Exibir Aviso Importante caso exista
+                const bannerAviso = document.getElementById('bannerAviso');
+                if (data.aviso_loja && data.aviso_loja.trim() !== "") {
+                    bannerAviso.textContent = `📢 ${data.aviso_loja}`;
+                    bannerAviso.style.display = 'block';
+                }
+
+                // Configurar Status e Botões do WhatsApp
+                const badge = document.getElementById('badgeStatus');
+                const btnGas = document.getElementById('btnPedirGas');
+                const btnAgua = document.getElementById('btnPedirAgua');
+
+                if (data.status_loja) {
+                    badge.textContent = "Loja Aberta";
+                    badge.className = "status-badge bg-aberto";
+
+                    const msgGas = encodeURIComponent(`Olá! Gostaria de pedir um Botijão de Gás (R$ ${data.preco_gas.toFixed(2)})`);
+                    const msgAgua = encodeURIComponent(`Olá! Gostaria de pedir um Galão de Água (R$ ${data.preco_agua.toFixed(2)})`);
+
+                    btnGas.href = `https://wa.me/${data.whatsapp}?text=${msgGas}`;
+                    btnAgua.href = `https://wa.me/${data.whatsapp}?text=${msgAgua}`;
+                } else {
+                    badge.textContent = "Loja Fechada";
+                    badge.className = "status-badge bg-fechado";
+
+                    btnGas.textContent = "Fechado";
+                    btnGas.classList.add('btn-disabled');
+                    btnAgua.textContent = "Fechado";
+                    btnAgua.classList.add('btn-disabled');
+                }
+
+            } catch (err) {
+                document.querySelector('.products').style.display = 'none';
+                document.querySelector('.header').style.display = 'none';
+                document.getElementById('mensagem-erro').style.display = 'block';
+            }
+        }
+
+        carregarLoja();
+    </script>
 </body>
 </html>
